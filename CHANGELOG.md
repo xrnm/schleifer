@@ -8,5 +8,7 @@ dates in `YYYY-MM-DD`.
 
 - Initial commit and launch — first public deployment at
   <https://schleifer.justinedwards.me>.
-- Bumped the project's Node version pin from 20 to 26 (`.nvmrc` and
-  `engines.node`).
+- Bumped the project's Node version pin from 20 to 24 — current Active
+  LTS — in `.nvmrc` and `engines.node`. (Originally landed targeting 26,
+  walked back the same day because the Cloudflare Pages build image
+  doesn't ship 26 yet.)
