@@ -5,7 +5,7 @@ import {
   generateCardsForNoun,
   levenshtein,
 } from './declension';
-import { Noun } from '../models/types';
+import { Card, Noun } from '../models/types';
 
 const tisch: Noun = {
   id: 'tisch',
@@ -217,5 +217,53 @@ describe('checkAnswer', () => {
 
   it('umlaut substitution mid-word is wrong, not typo', () => {
     expect(checkAnswer('die Mätter', 'die Mütter')).toEqual({ kind: 'wrong' });
+  });
+
+  describe('article-system mismatch (def vs indef)', () => {
+    const tischDefAcc: Card = {
+      id: 'tisch|sg|acc|def', nounId: 'tisch',
+      number: 'sg', case: 'acc', articleType: 'def',
+      expected: 'den Tisch',
+    };
+    const tischIndefAcc: Card = {
+      id: 'tisch|sg|acc|indef', nounId: 'tisch',
+      number: 'sg', case: 'acc', articleType: 'indef',
+      expected: 'einen Tisch',
+    };
+    const tischDefNomPl: Card = {
+      id: 'tisch|pl|nom|def', nounId: 'tisch',
+      number: 'pl', case: 'nom', articleType: 'def',
+      expected: 'die Tische',
+    };
+
+    it('flags indef form when def was asked', () => {
+      expect(checkAnswer('einen Tisch', 'den Tisch', tisch, tischDefAcc))
+        .toEqual({ kind: 'article-mismatch', usedArticleType: 'indef' });
+    });
+    it('flags def form when indef was asked', () => {
+      expect(checkAnswer('den Tisch', 'einen Tisch', tisch, tischIndefAcc))
+        .toEqual({ kind: 'article-mismatch', usedArticleType: 'def' });
+    });
+    it('does not fire on plural cards (no indef plural)', () => {
+      expect(checkAnswer('einen Tische', 'die Tische', tisch, tischDefNomPl))
+        .toEqual({ kind: 'wrong' });
+    });
+    it('falls through to existing logic when no card is supplied', () => {
+      expect(checkAnswer('einen Tisch', 'den Tisch', tisch))
+        .toEqual({ kind: 'wrong' });
+    });
+    it('tolerates sentence-case on the article (Die Hoffnung vs eine Hoffnung)', () => {
+      const hoffnung: Noun = {
+        id: 'hoffnung', singular: 'Hoffnung', plural: 'Hoffnungen',
+        pluralOnly: false, gender: 'f', importance: 5, english: 'hope',
+      };
+      const card: Card = {
+        id: 'hoffnung|sg|nom|indef', nounId: 'hoffnung',
+        number: 'sg', case: 'nom', articleType: 'indef',
+        expected: 'eine Hoffnung',
+      };
+      expect(checkAnswer('Die Hoffnung', 'eine Hoffnung', hoffnung, card))
+        .toEqual({ kind: 'article-mismatch', usedArticleType: 'def' });
+    });
   });
 });
