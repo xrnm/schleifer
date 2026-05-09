@@ -157,7 +157,7 @@ const ARTICLE_LABEL: Record<string, string> = {
         </div>
 
         @if (current) {
-          <article class="qcard">
+          <article class="qcard" [class.qcard--shake]="shaking">
             <div class="qhead">
               <div class="qhead__noun">{{ current.noun.singular }}</div>
               <div class="qhead__chips">
@@ -183,7 +183,9 @@ const ARTICLE_LABEL: Record<string, string> = {
                   type="text"
                   class="qinput"
                   [class.is-typo]="feedback?.typo"
+                  [class.is-mismatch]="mismatchNotice !== null"
                   [(ngModel)]="entered"
+                  (ngModelChange)="onEnteredChange()"
                   name="answer"
                   [disabled]="feedback !== null"
                   autocomplete="off"
@@ -193,6 +195,33 @@ const ARTICLE_LABEL: Record<string, string> = {
                 />
                 <span class="qkbd" aria-hidden="true">↵ Enter</span>
               </div>
+
+              @if (mismatchNotice) {
+                <div class="mismatch-notice" role="status" aria-live="polite">
+                  <div class="mismatch-notice__title">
+                    {{ i18n.t('session.result.articleMismatch') }}
+                  </div>
+                  <div class="mismatch-notice__body">
+                    {{ mismatchNotice.used === 'def'
+                      ? i18n.t('session.articleMismatch.usedDef')
+                      : i18n.t('session.articleMismatch.usedIndef') }}
+                  </div>
+                </div>
+              }
+
+              @if (feedback === null) {
+                <div class="qchars" role="toolbar" aria-label="Insert German character">
+                  @for (ch of specialChars; track ch) {
+                    <button
+                      type="button"
+                      class="qchar"
+                      (mousedown)="$event.preventDefault()"
+                      (click)="insertChar(ch)"
+                      [attr.aria-label]="'Insert ' + ch"
+                    >{{ ch }}</button>
+                  }
+                </div>
+              }
 
               <div class="qactions">
                 @if (feedback === null) {
@@ -247,13 +276,16 @@ const ARTICLE_LABEL: Record<string, string> = {
                   <b>{{ i18n.t('session.answer') }}</b>
                   <code>{{ feedback.expected }}</code>
                 </div>
-                @if (current.noun.english) {
-                  <div class="feedback__row gloss">{{ current.noun.english }}</div>
-                }
                 <div class="feedback__row">
                   <b>{{ i18n.t('session.nominativ') }}</b>
                   <code>{{ nominativeForm(current.noun) }}</code>
                 </div>
+                @if (current.noun.english) {
+                  <div class="feedback__row feedback__row--translation">
+                    <b>{{ i18n.t('session.translation') }}</b>
+                    <span class="gloss">{{ current.noun.english }}</span>
+                  </div>
+                }
                 @if (primaryFeedbackRule(); as r) {
                   <div class="rule-line">
                     <span class="rid">{{ i18n.t('session.rule', { n: r.id }) }}</span>
@@ -296,6 +328,66 @@ const ARTICLE_LABEL: Record<string, string> = {
         font-family: var(--font-mono);
         font-size: 12.5px;
       }
+      .qchars {
+        display: flex;
+        gap: 6px;
+        margin-top: 12px;
+        flex-wrap: wrap;
+      }
+      .qchar {
+        font-family: var(--font-mono);
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--ink-2);
+        background: var(--bg-2);
+        border: 1px solid var(--rule);
+        padding: 8px 0;
+        cursor: pointer;
+        border-radius: 0;
+        min-width: 40px;
+        text-align: center;
+        transition:
+          color var(--dur-fast) var(--ease-standard),
+          border-color var(--dur-fast) var(--ease-standard),
+          background var(--dur-fast) var(--ease-standard);
+      }
+      .qchar:hover {
+        color: var(--ink);
+        border-color: var(--ink);
+        background: var(--bg-3);
+      }
+      .qchar:focus-visible {
+        outline: 2px solid var(--orange);
+        outline-offset: 2px;
+      }
+
+      .qinput.is-mismatch {
+        border-color: var(--orange);
+        background: rgba(255, 91, 31, 0.08);
+      }
+      .mismatch-notice {
+        margin-top: 14px;
+        padding: 12px 14px;
+        background: var(--bg-2);
+        border-left: 3px solid var(--orange);
+        animation: feedback-in 220ms var(--ease-out);
+      }
+      .mismatch-notice__title {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        font-size: 11px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--orange);
+        margin-bottom: 4px;
+      }
+      .mismatch-notice__body {
+        font-family: var(--font-mono);
+        font-size: 12.5px;
+        color: var(--ink-2);
+        letter-spacing: 0.02em;
+        line-height: 1.4;
+      }
     `,
   ],
 })
@@ -326,9 +418,42 @@ export class SessionComponent implements OnInit, AfterViewInit {
     entered?: string;
     rules?: Rule[];
   } | null = null;
+  mismatchNotice: { used: 'def' | 'indef' } | null = null;
+  shaking = false;
+  private shakeOffTimer: ReturnType<typeof setTimeout> | undefined;
+
+  private triggerShake() {
+    if (this.shakeOffTimer) clearTimeout(this.shakeOffTimer);
+    // Drop the class first so a repeated mismatch retriggers the animation;
+    // re-add on the next macrotask after the DOM has applied the removal.
+    this.shaking = false;
+    setTimeout(() => {
+      this.shaking = true;
+      this.shakeOffTimer = setTimeout(() => { this.shaking = false; }, 520);
+    }, 0);
+  }
   loaded = false;
 
   readonly chipLabel = { case: 'CASE', num: 'NUM', art: 'ART' };
+  readonly specialChars = ['ä', 'Ä', 'ö', 'Ö', 'ü', 'Ü', 'ß'];
+
+  insertChar(ch: string) {
+    if (this.feedback !== null) return;
+    const input = this.answerInput?.nativeElement;
+    const cur = this.entered ?? '';
+    if (!input) {
+      this.entered = cur + ch;
+      return;
+    }
+    const start = input.selectionStart ?? cur.length;
+    const end = input.selectionEnd ?? cur.length;
+    this.entered = cur.slice(0, start) + ch + cur.slice(end);
+    setTimeout(() => {
+      input.focus();
+      const pos = start + ch.length;
+      input.setSelectionRange(pos, pos);
+    }, 0);
+  }
 
   caseLabel(c: string) { return CASE_LABEL[c] ?? c; }
   numberLabel(n: string) { return NUMBER_LABEL[n] ?? n; }
@@ -367,6 +492,15 @@ export class SessionComponent implements OnInit, AfterViewInit {
       ev.preventDefault();
       this.next();
     }
+  }
+
+  @HostListener('window:keydown.escape', ['$event'])
+  onEscapeKey(ev: KeyboardEvent) {
+    // Esc skips the active card. Only meaningful while answering — once
+    // feedback is showing, Enter advances and Esc is a no-op.
+    if (!this.current || this.feedback !== null || this.done) return;
+    ev.preventDefault();
+    this.onSkip();
   }
 
   async ngOnInit() {
@@ -452,9 +586,25 @@ export class SessionComponent implements OnInit, AfterViewInit {
       this.entered,
       this.current.card.expected,
       this.current.noun,
+      this.current.card,
     );
+    if (check.kind === 'article-mismatch') {
+      // Don't lock in the answer — shake the card, surface a notice, and
+      // let the user correct the article before resubmitting.
+      this.mismatchNotice = { used: check.usedArticleType as 'def' | 'indef' };
+      this.triggerShake();
+      this.focusInput();
+      return;
+    }
+    this.mismatchNotice = null;
     const result: AnswerResult = check.kind === 'wrong' ? 'incorrect' : 'correct';
     await this.recordResult(result, check.kind === 'typo');
+  }
+
+  onEnteredChange() {
+    // Any edit clears the article-mismatch warning so it doesn't linger
+    // after the user starts fixing it.
+    if (this.mismatchNotice !== null) this.mismatchNotice = null;
   }
 
   async onIdk() {
@@ -493,10 +643,14 @@ export class SessionComponent implements OnInit, AfterViewInit {
     this.current = this.queue[this.position] ?? null;
     this.entered = '';
     this.feedback = null;
+    this.mismatchNotice = null;
     this.focusInput();
   }
 
-  private async recordResult(result: AnswerResult, typo = false) {
+  private async recordResult(
+    result: AnswerResult,
+    typo = false,
+  ) {
     if (!this.current || !this.session) return;
     const cur = this.current;
     const now = Date.now();
@@ -557,6 +711,7 @@ export class SessionComponent implements OnInit, AfterViewInit {
     this.position++;
     this.entered = '';
     this.feedback = null;
+    this.mismatchNotice = null;
     if (this.position >= this.queue.length) {
       await this.endSession();
       return;

@@ -40,10 +40,88 @@ import { I18nService } from './core/i18n.service';
       </div>
     </header>
     <router-outlet />
+    <footer class="footer">
+      <div class="footer__inner">
+        <span class="footer__credit">
+          MADE WITH LOVE BY
+          <a
+            class="footer__link"
+            href="https://justinedwards.me"
+            target="_blank"
+            rel="noopener noreferrer"
+          >JUSTIN EDWARDS</a>
+          <span class="footer__sep" aria-hidden="true">·</span>
+          PAIRED WITH
+          <a
+            class="footer__link"
+            href="https://claude.com/claude-code"
+            target="_blank"
+            rel="noopener noreferrer"
+          >CLAUDE</a>
+        </span>
+        <a
+          class="footer__link"
+          href="https://github.com/xrnm/schleifer"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          // SOURCE — github.com/xrnm/schleifer
+        </a>
+      </div>
+    </footer>
   `,
   styles: [
     `
-      :host { display: block; min-height: 100vh; }
+      :host {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+      router-outlet { display: contents; }
+      :host > * { flex: 0 0 auto; }
+      :host > router-outlet ~ * { /* allow main pages to fill before footer */ }
+
+      .footer {
+        margin-top: auto;
+        border-top: 1px solid var(--rule);
+        background: var(--bg);
+        position: relative;
+        z-index: 1;
+      }
+      .footer__inner {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 18px 32px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+      .footer__credit {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        font-size: 11px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--ink-3);
+      }
+      .footer__link {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        font-size: 11px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--ink-3);
+        text-decoration: none;
+        transition: color var(--dur-fast) var(--ease-standard);
+      }
+      .footer__credit .footer__link { color: var(--ink-2); }
+      .footer__sep { margin: 0 6px; color: var(--rule); }
+      .footer__link:hover {
+        color: var(--orange);
+        text-decoration: none;
+      }
 
       nav.nav a {
         background: transparent;

@@ -109,15 +109,36 @@ export function generateAllCards(nouns: Noun[]): Card[] {
 export type AnswerCheck =
   | { kind: 'exact' }
   | { kind: 'typo'; distance: 1 }
+  | { kind: 'article-mismatch'; usedArticleType: ArticleT }
   | { kind: 'wrong' };
 
 export function checkAnswer(
   entered: string,
   expected: string,
   noun?: Noun,
+  card?: Card,
 ): AnswerCheck {
   const e = entered.trim();
   if (e === expected) return { kind: 'exact' };
+
+  // Article-system mismatch: same noun, same case, same number, but the user
+  // typed the def/indef form when the card asked for the other. German has no
+  // indefinite plural, so this can only fire on singular cards. Sentence-case
+  // on the article's first letter is treated as free, matching the rest of
+  // the engine.
+  if (noun !== undefined && card !== undefined && card.number === 'sg') {
+    const opposite: ArticleT = card.articleType === 'def' ? 'indef' : 'def';
+    const altParts = splitArticleNoun(
+      expectedAnswer(noun, card.number, card.case, opposite),
+    );
+    const eParts = splitArticleNoun(e);
+    if (
+      eqLeadingCaseFree(eParts.article, altParts.article) &&
+      eParts.noun === altParts.noun
+    ) {
+      return { kind: 'article-mismatch', usedArticleType: opposite };
+    }
+  }
 
   const ePart = splitArticleNoun(e);
   const xPart = splitArticleNoun(expected);
