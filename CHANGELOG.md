@@ -6,6 +6,19 @@ dates in `YYYY-MM-DD`.
 
 ## 2026-05-09
 
+- Phone-size pass: tighter type scale at ≤640 and ≤420, reduced page
+  padding, brand sub hidden, nav allowed to wrap, quiz card noun and
+  chips slimmed down, kbd hint hidden on touch widths, review summary
+  reflows to 2 cols then 1, data page's 5-up stat strip switched to
+  horizontal scroll instead of crushing. Added iOS safe-area padding
+  and a 44 px minimum touch target on touch devices.
+- Installable PWA: `manifest.webmanifest` (standalone, dark theme,
+  128/256/512 icons + maskable) and a small custom service worker
+  (`public/sw.js`) that pre-caches the app shell, network-first for
+  navigations so deploys propagate, cache-first for same-origin assets.
+  Registered in `main.ts` with a localhost guard so `ng serve` stays
+  uncached. iOS web-app meta tags + theme-color land in `index.html`.
+- Wired Google Analytics (`G-L6W84ZWCTP`) via gtag.js in `index.html`.
 - Initial commit and launch — first public deployment at
   <https://schleifer.justinedwards.me>.
 - Bumped the project's Node version pin from 20 to 24 — current Active

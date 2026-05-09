@@ -1,0 +1,19 @@
+{
+  "name": "Schleifer — German cases drill",
+  "short_name": "Schleifer",
+  "description": "Spaced-repetition drill for German articles and case endings.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a0a0a",
+  "theme_color": "#0a0a0a",
+  "categories": ["education", "productivity"],
+  "lang": "en",
+  "icons": [
+    { "src": "/logo-128.png", "sizes": "128x128", "type": "image/png" },
+    { "src": "/logo-256.png", "sizes": "256x256", "type": "image/png" },
+    { "src": "/logo-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/logo-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

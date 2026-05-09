@@ -33,6 +33,8 @@ corners, hairline rules, and `der` / `die` / `das` as colored brand tokens.
 - Corpus / Data page with import + export of all local user data
   (sessions, card states, events) as JSON, plus a wipe action.
 - English / German UI toggle.
+- Installable as a PWA — phone-optimised layout, offline app shell,
+  standalone display, dark theme.
 
 ## Stack
 

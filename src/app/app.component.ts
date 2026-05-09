@@ -166,6 +166,18 @@ import { I18nService } from './core/i18n.service';
         padding-left: 12px;
         border-left: 1px solid var(--rule);
       }
+      @media (max-width: 640px) {
+        .lang-slider {
+          margin-left: 0.25rem;
+          padding-left: 8px;
+          gap: 0.3rem;
+        }
+        .footer__inner {
+          padding: 14px 16px;
+        }
+        .footer__credit, .footer__link { font-size: 10px; letter-spacing: 0.12em; }
+        .footer__sep { display: none; }
+      }
       .lang-slider input { display: none; }
       .lang-label.active { color: var(--orange); }
       .lang-slider .track {
