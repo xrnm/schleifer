@@ -1,5 +1,7 @@
 # Schleifer
 
+**Live at <https://schleifer.justinedwards.me>**
+
 A daily drill app for German noun cases. Type the article + adjective + noun
 form for a randomly chosen noun, case, number, and definiteness; get
 immediate feedback with a relevant gender rule. Spaced-repetition state and
