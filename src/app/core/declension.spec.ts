@@ -230,11 +230,6 @@ describe('checkAnswer', () => {
       number: 'sg', case: 'acc', articleType: 'indef',
       expected: 'einen Tisch',
     };
-    const tischDefNomPl: Card = {
-      id: 'tisch|pl|nom|def', nounId: 'tisch',
-      number: 'pl', case: 'nom', articleType: 'def',
-      expected: 'die Tische',
-    };
 
     it('flags indef form when def was asked', () => {
       expect(checkAnswer('einen Tisch', 'den Tisch', tisch, tischDefAcc))
@@ -244,8 +239,89 @@ describe('checkAnswer', () => {
       expect(checkAnswer('den Tisch', 'einen Tisch', tisch, tischIndefAcc))
         .toEqual({ kind: 'article-mismatch', usedArticleType: 'def' });
     });
-    it('does not fire on plural cards (no indef plural)', () => {
-      expect(checkAnswer('einen Tische', 'die Tische', tisch, tischDefNomPl))
+    it('fires on plural cards when the user used an indef-singular article', () => {
+      // Real example: "Einen Seminaren" against an expected "den Seminaren"
+      // dative-plural card — user picked the indefinite article on a plural.
+      const seminar: Noun = {
+        id: 'seminar', singular: 'Seminar', plural: 'Seminare',
+        pluralOnly: false, gender: 'n', importance: 5, english: 'seminar',
+      };
+      const seminarDefDatPl: Card = {
+        id: 'seminar|pl|dat|def', nounId: 'seminar',
+        number: 'pl', case: 'dat', articleType: 'def',
+        expected: 'den Seminaren',
+      };
+      // The user even used the wrong gender's indef article — `einen` is
+      // masc-acc-sg — but the indefinite intent is unambiguous.
+      expect(checkAnswer('Einen Seminaren', 'den Seminaren', seminar, seminarDefDatPl))
+        .toEqual({ kind: 'article-mismatch', usedArticleType: 'indef' });
+      // Same with a gender-correct indef article.
+      expect(checkAnswer('einem Seminaren', 'den Seminaren', seminar, seminarDefDatPl))
+        .toEqual({ kind: 'article-mismatch', usedArticleType: 'indef' });
+    });
+    it('plural article-mismatch requires the plural noun form, not singular', () => {
+      // Same indef-singular article, but the user typed the singular noun
+      // form — that is "wrong number", not "wrong article system".
+      const seminar: Noun = {
+        id: 'seminar', singular: 'Seminar', plural: 'Seminare',
+        pluralOnly: false, gender: 'n', importance: 5, english: 'seminar',
+      };
+      const seminarDefDatPl: Card = {
+        id: 'seminar|pl|dat|def', nounId: 'seminar',
+        number: 'pl', case: 'dat', articleType: 'def',
+        expected: 'den Seminaren',
+      };
+      expect(checkAnswer('einem Seminar', 'den Seminaren', seminar, seminarDefDatPl))
+        .toEqual({ kind: 'wrong' });
+    });
+    it('plural article-mismatch holds the line on missing -n in dative plural', () => {
+      // Trailing edit = grammar miss, not a slip — even with the indef article.
+      const seminar: Noun = {
+        id: 'seminar', singular: 'Seminar', plural: 'Seminare',
+        pluralOnly: false, gender: 'n', importance: 5, english: 'seminar',
+      };
+      const seminarDefDatPl: Card = {
+        id: 'seminar|pl|dat|def', nounId: 'seminar',
+        number: 'pl', case: 'dat', articleType: 'def',
+        expected: 'den Seminaren',
+      };
+      expect(checkAnswer('einem Seminare', 'den Seminaren', seminar, seminarDefDatPl))
+        .toEqual({ kind: 'wrong' });
+    });
+    it('still flags wrong article system on plurals as plain wrong without a card', () => {
+      // No card supplied → mismatch detection is skipped.
+      expect(checkAnswer('einen Tische', 'die Tische', tisch))
+        .toEqual({ kind: 'wrong' });
+    });
+    it('forgives a single typo in the noun (Der KRise vs einer Krise)', () => {
+      // Real example: stray capital R mid-word should not cancel article-
+      // mismatch detection — the article-system swap (def↔indef) is what
+      // the user got wrong, not the noun.
+      const krise: Noun = {
+        id: 'krise', singular: 'Krise', plural: 'Krisen',
+        pluralOnly: false, gender: 'f', importance: 5, english: 'crisis',
+      };
+      const kriseIndefDat: Card = {
+        id: 'krise|sg|dat|indef', nounId: 'krise',
+        number: 'sg', case: 'dat', articleType: 'indef',
+        expected: 'einer Krise',
+      };
+      expect(checkAnswer('Der KRise', 'einer Krise', krise, kriseIndefDat))
+        .toEqual({ kind: 'article-mismatch', usedArticleType: 'def' });
+    });
+    it('does not over-forgive umlaut errors in the noun under mismatch', () => {
+      // Mismatch detection must not paper over an umlaut error on the noun.
+      const haus_: Noun = {
+        id: 'haus', singular: 'Haus', plural: 'Häuser',
+        pluralOnly: false, gender: 'n', importance: 5, english: 'house',
+      };
+      const hausIndefDat: Card = {
+        id: 'haus|sg|dat|indef', nounId: 'haus',
+        number: 'sg', case: 'dat', articleType: 'indef',
+        expected: 'einem Haus',
+      };
+      // 'Häus' uses an umlaut where 'Haus' did not — never a typo.
+      expect(checkAnswer('dem Häus', 'einem Haus', haus_, hausIndefDat))
         .toEqual({ kind: 'wrong' });
     });
     it('falls through to existing logic when no card is supplied', () => {

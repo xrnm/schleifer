@@ -121,22 +121,35 @@ export function checkAnswer(
   const e = entered.trim();
   if (e === expected) return { kind: 'exact' };
 
-  // Article-system mismatch: same noun, same case, same number, but the user
-  // typed the def/indef form when the card asked for the other. German has no
-  // indefinite plural, so this can only fire on singular cards. Sentence-case
-  // on the article's first letter is treated as free, matching the rest of
-  // the engine.
-  if (noun !== undefined && card !== undefined && card.number === 'sg') {
-    const opposite: ArticleT = card.articleType === 'def' ? 'indef' : 'def';
-    const altParts = splitArticleNoun(
-      expectedAnswer(noun, card.number, card.case, opposite),
-    );
+  // Article-system mismatch: the user typed the def/indef form when the card
+  // asked for the other. Sentence-case on the article's first letter is
+  // treated as free, and a single typo in the noun is forgiven so a stray
+  // capital or letter slip doesn't cancel detection.
+  if (noun !== undefined && card !== undefined) {
     const eParts = splitArticleNoun(e);
-    if (
-      eqLeadingCaseFree(eParts.article, altParts.article) &&
-      eParts.noun === altParts.noun
-    ) {
-      return { kind: 'article-mismatch', usedArticleType: opposite };
+    if (card.number === 'sg') {
+      const opposite: ArticleT = card.articleType === 'def' ? 'indef' : 'def';
+      const altParts = splitArticleNoun(
+        expectedAnswer(noun, card.number, card.case, opposite),
+      );
+      if (
+        eqLeadingCaseFree(eParts.article, altParts.article) &&
+        nounsMatchForMismatch(eParts.noun, altParts.noun)
+      ) {
+        return { kind: 'article-mismatch', usedArticleType: opposite };
+      }
+    } else {
+      // Plural cards are always def. Detect the only possible swap: an
+      // indef-singular article (any case/gender) paired with the right
+      // plural-noun form. Loose article match — `ein/eine/einer/einen/einem/eines`
+      // are all unambiguously indefinite, regardless of which case/gender.
+      const xParts = splitArticleNoun(expected);
+      if (
+        INDEF_ARTICLE_RE.test(eParts.article) &&
+        nounsMatchForMismatch(eParts.noun, xParts.noun)
+      ) {
+        return { kind: 'article-mismatch', usedArticleType: 'indef' };
+      }
     }
   }
 
@@ -168,6 +181,23 @@ export function checkAnswer(
     return { kind: 'typo', distance: 1 };
   }
   return { kind: 'wrong' };
+}
+
+// Any indef-singular article form, with optional sentence-case on the first
+// letter. Covers ein/eine/einer/einen/einem/eines across genders and cases.
+const INDEF_ARTICLE_RE = /^[Ee]in(e|er|en|em|es)?$/;
+
+// True iff the entered noun is close enough to the expected noun that the
+// real mistake is the article system, not the noun. Forgives a single typo
+// (e.g. stray capital, mid-word slip) but holds the line on grammar-level
+// noun errors — umlauts must be exact, and trailing insert/delete is the
+// shape of a missing plural marker, not a finger slip.
+function nounsMatchForMismatch(a: string, b: string): boolean {
+  if (a === b) return true;
+  if (levenshtein(a, b, 1) !== 1) return false;
+  if (diffInvolvesUmlaut(a, b)) return false;
+  if (isTrailingInsertOrDelete(a, b)) return false;
+  return true;
 }
 
 const UMLAUT_CHARS = /[äöüÄÖÜß]/;

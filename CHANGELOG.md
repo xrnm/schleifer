@@ -4,6 +4,16 @@ All notable changes to Schleifer are tracked here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/),
 dates in `YYYY-MM-DD`.
 
+## 2026-05-10
+
+- Article-system mismatch detection extended: the soft retry now also fires
+  on plural cards when the user typed an indef-singular article paired with
+  the right plural-noun form (e.g. `Einen Seminaren` for an expected
+  `den Seminaren`). The noun side now forgives a single typo, so a stray
+  capital like `Der KRise` no longer cancels detection. Umlaut errors and
+  trailing insert/delete (missing dative-pl `-n`, etc.) still count as
+  grammar misses, not slips.
+
 ## 2026-05-09
 
 - Phone-size pass: tighter type scale at ≤640 and ≤420, reduced page

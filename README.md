@@ -19,9 +19,10 @@ corners, hairline rules, and `der` / `die` / `das` as colored brand tokens.
 - Typo tolerance: Levenshtein ≤ 2 with a matching first letter is accepted
   but flagged.
 - Article-system mismatch warning: typing the definite form when a card
-  asked for the indefinite (or vice versa) shakes the card, surfaces an
-  inline explanation, and leaves the answer editable for correction
-  rather than marking it wrong outright.
+  asked for the indefinite (or vice versa, including indefinite-on-plural)
+  shakes the card, surfaces an inline explanation, and leaves the answer
+  editable for correction rather than marking it wrong outright. A small
+  typo in the noun does not cancel detection.
 - Special-character drawer (`ä Ä ö Ö ü Ü ß`) on the quiz card that
   inserts at the caret for users without a German keyboard.
 - Per-card SRS state (reps, lapses, next-due timestamp) drives a
