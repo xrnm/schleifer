@@ -3,11 +3,13 @@ import { Router } from '@angular/router';
 import { ActivityService } from './activity.service';
 import { DbService } from './db.service';
 import { Session } from '../models/types';
+import { PracticeArea } from './selector.service';
 
 /**
  * Creates a session row, logs the start event, stores the card list in
- * meta, and navigates to /session/:id. Used by both the home "Start
- * session" button and the progress "Drill due now" button.
+ * meta, and navigates to the area-specific session route. Used by both
+ * area home pages (Deklination + Vokabular) and the "Drill due now"
+ * shortcuts.
  */
 @Injectable({ providedIn: 'root' })
 export class SessionStarterService {
@@ -15,7 +17,10 @@ export class SessionStarterService {
   private activity = inject(ActivityService);
   private router = inject(Router);
 
-  async start(cardIds: string[]): Promise<string | null> {
+  async start(
+    cardIds: string[],
+    area: PracticeArea = 'deklination',
+  ): Promise<string | null> {
     if (cardIds.length === 0) return null;
     const id = crypto.randomUUID();
     const session: Session = {
@@ -36,7 +41,9 @@ export class SessionStarterService {
       sessionId: id,
     });
     await this.db.setMeta(`session:${id}:cards`, cardIds);
-    await this.router.navigate(['/session', id]);
+    await this.db.setMeta(`session:${id}:area`, area);
+    const path = area === 'vokabular' ? ['/vokabular', 'session', id] : ['/session', id];
+    await this.router.navigate(path);
     return id;
   }
 }

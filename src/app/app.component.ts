@@ -9,14 +9,17 @@ import { I18nService } from './core/i18n.service';
   template: `
     <header class="topbar">
       <div class="topbar__inner">
-        <a routerLink="/" class="brand" aria-label="Schleifer home">
+        <a routerLink="/deklination" class="brand" aria-label="Schleifer home">
           <span class="bevel" aria-hidden="true"></span>
           {{ i18n.t('app.brand') }}
           <span class="brand__sub">{{ i18n.t('app.brandSub') }}</span>
         </a>
         <nav class="nav">
-          <a routerLink="/" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }">
-            <span class="nav__label">{{ i18n.t('nav.home') }}</span>
+          <a routerLink="/deklination" routerLinkActive="is-active">
+            <span class="nav__label">{{ i18n.t('nav.deklination') }}</span>
+          </a>
+          <a routerLink="/vokabular" routerLinkActive="is-active">
+            <span class="nav__label">{{ i18n.t('nav.vokabular') }}</span>
           </a>
           <a routerLink="/rules" routerLinkActive="is-active">
             <span class="nav__label">{{ i18n.t('nav.rules') }}</span>

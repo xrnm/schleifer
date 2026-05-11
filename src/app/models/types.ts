@@ -4,6 +4,26 @@ export type NumberT = 'sg' | 'pl';
 export type ArticleT = 'def' | 'indef';
 export type AnswerResult = 'correct' | 'incorrect' | 'idk' | 'skipped';
 
+export type CaseFilter = 'all' | CaseT;
+export type NumberFilter = 'both' | NumberT;
+export type ArticleFilter = 'both' | ArticleT;
+
+export interface AppSettings {
+  caseFilter: CaseFilter;
+  numberFilter: NumberFilter;
+  articleFilter: ArticleFilter;
+}
+
+export type TranslationDirection = 'de->en' | 'en->de';
+
+export interface TranslationQuestion {
+  nounId: string;
+  direction: TranslationDirection;
+  prompt: string;
+  choices: string[];
+  answerIndex: number;
+}
+
 export interface Noun {
   id: string;
   singular: string;

@@ -4,6 +4,28 @@ All notable changes to Schleifer are tracked here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/),
 dates in `YYYY-MM-DD`.
 
+## 2026-05-11
+
+- Top-level practice areas. The header nav now offers two modes —
+  **Deklination** (the original case-drill quiz) and **Vokabular** (a new
+  multiple-choice translation drill). Each has its own home screen, its own
+  Sitzung-starten / Drill-due-now flow, and its own SRS queue; translation
+  cards live alongside declension cards in the same `cardStates` store
+  under `${nounId}|translation` ids so they never collide. `/` redirects to
+  `/deklination`; vocab sessions live under `/vokabular/session/:id`.
+- Deklination filters drawer. A gear-icon button sits next to "Sitzung
+  starten" on the Deklination home and toggles a drawer with three
+  segmented-pill rows — Fall `[Alle|Nom|Akk|Dat]`, Numerus `[Beide|Sg|Pl]`,
+  Artikel `[Beide|Bestimmt|Unbestimmt]` — so you can narrow a session to a
+  specific case, number, or article type. Selections persist in
+  `localStorage` (`schleifer.settings`) and the "due now" count refreshes
+  immediately when filters change. The home page's standalone
+  "Daten / Export" button was retired (Data is still in the top nav).
+- Vokabular session UI. Four large choice buttons under a centered prompt,
+  random DE→EN or EN→DE direction per question, keyboard shortcuts `1–4`
+  or `A–D` to pick and `Enter` to advance. Same SRS engine as Deklination
+  — correct answers extend the interval, misses reset it.
+
 ## 2026-05-10
 
 - Article-system mismatch detection extended: the soft retry now also fires

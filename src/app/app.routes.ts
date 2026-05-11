@@ -1,8 +1,9 @@
 import { Routes } from '@angular/router';
 
 export const routes: Routes = [
+  { path: '', pathMatch: 'full', redirectTo: 'deklination' },
   {
-    path: '',
+    path: 'deklination',
     loadComponent: () =>
       import('./pages/home/home.component').then((m) => m.HomeComponent),
   },
@@ -11,6 +12,20 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./pages/session/session.component').then(
         (m) => m.SessionComponent,
+      ),
+  },
+  {
+    path: 'vokabular',
+    loadComponent: () =>
+      import('./pages/vokabular-home/vokabular-home.component').then(
+        (m) => m.VokabularHomeComponent,
+      ),
+  },
+  {
+    path: 'vokabular/session/:id',
+    loadComponent: () =>
+      import('./pages/vokabular-session/vokabular-session.component').then(
+        (m) => m.VokabularSessionComponent,
       ),
   },
   {

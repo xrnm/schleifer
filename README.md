@@ -13,6 +13,13 @@ corners, hairline rules, and `der` / `die` / `das` as colored brand tokens.
 
 ## Features
 
+- Two practice areas in the top nav. **Deklination** runs the original
+  type-the-article-and-noun quiz; **Vokabular** runs a four-choice
+  translation drill that randomizes direction (DE→EN or EN→DE) per
+  question. Each has its own SRS queue.
+- Deklination filters: a gear-icon drawer on the Deklination home narrows
+  a session to a specific case (Nom / Akk / Dat), number (Sg / Pl), or
+  article type (definite / indefinite). Selections persist locally.
 - Drill sessions of arbitrary length with the four cases
   (Nominativ, Akkusativ, Dativ — Genitiv reserved for future use), both
   numbers (Singular / Plural), and definite + indefinite article forms.
@@ -62,7 +69,8 @@ amend rules or vocabulary.
 src/
   app/
     core/        services: catalog, db, srs, declension, i18n, etc.
-    pages/       routed pages: home, session, progress, rules, data
+    pages/       routed pages: home (Deklination), session, vokabular-home,
+                 vokabular-session, progress, rules, data
     models/      shared types
   assets/        nouns.json, case-tables.json (source of truth)
   styles.css     Schliff design tokens + component styles

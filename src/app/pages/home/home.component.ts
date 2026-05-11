@@ -1,11 +1,18 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { CatalogService } from '../../core/catalog.service';
 import { DbService } from '../../core/db.service';
 import { I18nService } from '../../core/i18n.service';
 import { SelectorService } from '../../core/selector.service';
 import { SessionStarterService } from '../../core/session-starter.service';
-import { CardState, Session } from '../../models/types';
+import { SettingsService } from '../../core/settings.service';
+import {
+  ArticleFilter,
+  CardState,
+  CaseFilter,
+  NumberFilter,
+  Session,
+} from '../../models/types';
 
 const SESSION_TARGET = 50;
 const RECENT_FAIL_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
@@ -43,6 +50,20 @@ interface WordRow {
               : i18n.t('home.start', { n: sessionTarget }) }}</span>
             <span class="arrow" aria-hidden="true">→</span>
           </button>
+          <button
+            class="btn btn--ghost btn--lg gear-btn"
+            type="button"
+            (click)="toggleDrawer()"
+            [class.is-open]="drawerOpen()"
+            [attr.aria-expanded]="drawerOpen()"
+            [attr.aria-label]="i18n.t('home.settings.toggleAria')"
+            [title]="i18n.t('home.settings')"
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+          </button>
           @if (loaded && dueNow > 0) {
             <button
               class="btn btn--ghost btn--lg"
@@ -54,13 +75,56 @@ interface WordRow {
               <span class="arrow" aria-hidden="true">→</span>
             </button>
           }
-          <button class="btn btn--ghost" (click)="goData()">{{ i18n.t('home.dataExport') }}</button>
           <span class="kbd-hint">
             <span class="kbd">Enter</span> {{ enterText }}
             <span style="margin: 0 4px;">·</span>
             <span class="kbd">Esc</span> {{ escText }}
           </span>
         </div>
+
+        @if (drawerOpen()) {
+          <section class="settings-drawer" [attr.aria-label]="i18n.t('home.settings')">
+            <div class="settings-row">
+              <span class="settings-row__k">{{ i18n.t('settings.case') }}</span>
+              <div class="settings-pills" role="group" [attr.aria-label]="i18n.t('settings.case')">
+                @for (opt of caseOptions; track opt.value) {
+                  <button
+                    type="button"
+                    class="pill"
+                    [class.is-active]="settings.settings().caseFilter === opt.value"
+                    (click)="setCase(opt.value)"
+                  >{{ i18n.t(opt.labelKey) }}</button>
+                }
+              </div>
+            </div>
+            <div class="settings-row">
+              <span class="settings-row__k">{{ i18n.t('settings.number') }}</span>
+              <div class="settings-pills" role="group" [attr.aria-label]="i18n.t('settings.number')">
+                @for (opt of numberOptions; track opt.value) {
+                  <button
+                    type="button"
+                    class="pill"
+                    [class.is-active]="settings.settings().numberFilter === opt.value"
+                    (click)="setNumber(opt.value)"
+                  >{{ i18n.t(opt.labelKey) }}</button>
+                }
+              </div>
+            </div>
+            <div class="settings-row">
+              <span class="settings-row__k">{{ i18n.t('settings.article') }}</span>
+              <div class="settings-pills" role="group" [attr.aria-label]="i18n.t('settings.article')">
+                @for (opt of articleOptions; track opt.value) {
+                  <button
+                    type="button"
+                    class="pill"
+                    [class.is-active]="settings.settings().articleFilter === opt.value"
+                    (click)="setArticle(opt.value)"
+                  >{{ i18n.t(opt.labelKey) }}</button>
+                }
+              </div>
+            </div>
+          </section>
+        }
       </section>
 
       @if (loaded) {
@@ -223,6 +287,92 @@ interface WordRow {
         text-decoration: none;
       }
       .card-link:hover { text-decoration: underline; }
+
+      .gear-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 14px 16px;
+        color: var(--ink-2);
+      }
+      .gear-btn:hover { color: var(--orange); border-color: var(--orange); }
+      .gear-btn.is-open {
+        color: var(--orange);
+        border-color: var(--orange);
+        background: rgba(255, 91, 31, 0.06);
+      }
+      .gear-btn svg { display: block; transition: transform var(--dur-fast) var(--ease-standard); }
+      .gear-btn.is-open svg { transform: rotate(45deg); }
+
+      .settings-drawer {
+        margin-top: 16px;
+        border: 1px solid var(--rule);
+        border-left: 3px solid var(--orange);
+        background: var(--bg-2);
+        padding: 16px 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        animation: drawer-in 180ms var(--ease-standard, ease-out);
+      }
+      @keyframes drawer-in {
+        from { opacity: 0; transform: translateY(-4px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .settings-row {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+      .settings-row__k {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        font-size: 10.5px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--ink-3);
+        min-width: 70px;
+      }
+      .settings-pills {
+        display: inline-flex;
+        gap: 0;
+        border: 1px solid var(--rule);
+        background: var(--bg);
+      }
+      .pill {
+        background: transparent;
+        border: 0;
+        border-right: 1px solid var(--rule);
+        padding: 8px 14px;
+        font-family: var(--font-mono);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        color: var(--ink-2);
+        cursor: pointer;
+        text-transform: uppercase;
+        transition:
+          color var(--dur-fast) var(--ease-standard),
+          background var(--dur-fast) var(--ease-standard);
+      }
+      .pill:last-child { border-right: 0; }
+      .pill:hover { color: var(--ink); background: var(--bg-3); }
+      .pill.is-active {
+        color: var(--bg);
+        background: var(--orange);
+      }
+      .pill:focus-visible {
+        outline: 2px solid var(--orange);
+        outline-offset: 2px;
+        position: relative;
+        z-index: 1;
+      }
+      @media (max-width: 640px) {
+        .settings-row { gap: 8px; }
+        .settings-row__k { min-width: 0; }
+        .pill { padding: 8px 10px; font-size: 10px; }
+      }
     `,
   ],
 })
@@ -233,6 +383,7 @@ export class HomeComponent implements OnInit {
   private starter = inject(SessionStarterService);
   private router = inject(Router);
   i18n = inject(I18nService);
+  settings = inject(SettingsService);
 
   readonly sessionTarget = SESSION_TARGET;
   now = Date.now();
@@ -243,6 +394,27 @@ export class HomeComponent implements OnInit {
   loaded = false;
   starting = false;
 
+  drawerOpen = signal(false);
+
+  readonly caseOptions: { value: CaseFilter; labelKey: string }[] = [
+    { value: 'all', labelKey: 'settings.case.all' },
+    { value: 'nom', labelKey: 'settings.case.nom' },
+    { value: 'acc', labelKey: 'settings.case.acc' },
+    { value: 'dat', labelKey: 'settings.case.dat' },
+  ];
+  readonly numberOptions: { value: NumberFilter; labelKey: string }[] = [
+    { value: 'both', labelKey: 'settings.number.both' },
+    { value: 'sg', labelKey: 'settings.number.sg' },
+    { value: 'pl', labelKey: 'settings.number.pl' },
+  ];
+  readonly articleOptions: { value: ArticleFilter; labelKey: string }[] = [
+    { value: 'both', labelKey: 'settings.article.both' },
+    { value: 'def', labelKey: 'settings.article.def' },
+    { value: 'indef', labelKey: 'settings.article.indef' },
+  ];
+
+  filteredDueNow = computed(() => this.dueNow);
+
   sessions: Session[] = [];
   inProgress: WordRow[] = [];
   recentlyMissed: WordRow[] = [];
@@ -250,7 +422,6 @@ export class HomeComponent implements OnInit {
   get inProgressTop(): WordRow[] { return this.inProgress.slice(0, LIST_LIMIT); }
   get recentlyMissedTop(): WordRow[] { return this.recentlyMissed.slice(0, LIST_LIMIT); }
 
-  // Localized "to submit / to skip" snippets for the keyboard hint.
   get enterText() {
     return this.i18n.lang() === 'de' ? 'zum Absenden' : 'to submit';
   }
@@ -258,28 +429,56 @@ export class HomeComponent implements OnInit {
     return this.i18n.lang() === 'de' ? 'zum Überspringen' : 'to skip';
   }
 
+  toggleDrawer() { this.drawerOpen.update((v) => !v); }
+
+  setCase(v: CaseFilter) {
+    this.settings.setCaseFilter(v);
+    void this.refreshDueNow();
+  }
+  setNumber(v: NumberFilter) {
+    this.settings.setNumberFilter(v);
+    void this.refreshDueNow();
+  }
+  setArticle(v: ArticleFilter) {
+    this.settings.setArticleFilter(v);
+    void this.refreshDueNow();
+  }
+
+  private async refreshDueNow() {
+    this.dueNow = await this.selector.dueCount('deklination');
+  }
+
   async ngOnInit() {
     await this.catalog.init();
     this.totalNouns = this.catalog.allNouns().length;
 
-    const [sessions, states] = await Promise.all([
+    const [allSessions, states] = await Promise.all([
       this.db.getAllSessions(),
       this.db.getAllCardStates(),
     ]);
 
+    const areas = await Promise.all(
+      allSessions.map((s) => this.db.getMeta<string>(`session:${s.id}:area`)),
+    );
+    const sessions = allSessions.filter(
+      (_, i) => (areas[i] ?? 'deklination') === 'deklination',
+    );
     sessions.sort((a, b) => b.startedAt - a.startedAt);
     this.sessions = sessions;
     this.sessionsCompleted = sessions.filter((s) => s.endedAt !== null).length;
-    this.cardsAnswered = states.filter((s) => s.lastResult !== null).length;
-
-    const now = Date.now();
-    this.dueNow = states.filter(
-      (s) => s.lastResult !== null && s.due <= now,
+    this.cardsAnswered = states.filter(
+      (s) => s.lastResult !== null && !s.cardId.endsWith('|translation'),
     ).length;
 
+    this.dueNow = await this.selector.dueCount('deklination');
+
+    const now = Date.now();
     this.inProgress = this.buildWordRows(
       states.filter(
-        (s) => s.lastResult !== null && s.reps < IN_PROGRESS_REPS_THRESHOLD,
+        (s) =>
+          s.lastResult !== null &&
+          s.reps < IN_PROGRESS_REPS_THRESHOLD &&
+          !s.cardId.endsWith('|translation'),
       ),
     );
 
@@ -288,7 +487,8 @@ export class HomeComponent implements OnInit {
         (s) =>
           (s.lastResult === 'incorrect' || s.lastResult === 'idk') &&
           s.lastShownAt !== null &&
-          now - s.lastShownAt <= RECENT_FAIL_WINDOW_MS,
+          now - s.lastShownAt <= RECENT_FAIL_WINDOW_MS &&
+          !s.cardId.endsWith('|translation'),
       ),
     );
 
@@ -319,8 +519,11 @@ export class HomeComponent implements OnInit {
   async start() {
     this.starting = true;
     try {
-      const cards = await this.selector.pickSession(SESSION_TARGET);
-      await this.starter.start(cards.map((c) => c.id));
+      const cards = await this.selector.pickDeklinationSession(
+        SESSION_TARGET,
+        this.settings.settings(),
+      );
+      await this.starter.start(cards.map((c) => c.id), 'deklination');
     } finally {
       this.starting = false;
     }
@@ -330,15 +533,8 @@ export class HomeComponent implements OnInit {
     if (this.dueNow === 0) return;
     this.starting = true;
     try {
-      // Pull cardStates again so we send the latest snapshot (the home
-      // component caches counts but not the full row list for due-now).
-      const states = await this.db.getAllCardStates();
-      const now = Date.now();
-      const ids = states
-        .filter((s) => s.lastResult !== null && s.due <= now)
-        .sort((a, b) => a.due - b.due)
-        .map((s) => s.cardId);
-      await this.starter.start(ids);
+      const ids = await this.selector.dueCardIds('deklination');
+      await this.starter.start(ids, 'deklination');
     } finally {
       this.starting = false;
     }
@@ -346,10 +542,6 @@ export class HomeComponent implements OnInit {
 
   openSession(id: string) {
     this.router.navigate(['/session', id]);
-  }
-
-  goData() {
-    this.router.navigate(['/data']);
   }
 
   formatDate(ts: number): string {
