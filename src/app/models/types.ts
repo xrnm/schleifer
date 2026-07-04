@@ -1,17 +1,32 @@
 export type Gender = 'm' | 'f' | 'n';
 export type CaseT = 'nom' | 'acc' | 'dat';
 export type NumberT = 'sg' | 'pl';
-export type ArticleT = 'def' | 'indef';
+export type ArticleT = 'def' | 'indef' | 'poss';
 export type AnswerResult = 'correct' | 'incorrect' | 'idk' | 'skipped';
+
+// Possessive stems. `ihr` covers both her and their (declension is identical);
+// `Ihr` is formal-your and is kept distinct because the answer is capitalized.
+export type PossessiveStem =
+  | 'mein'
+  | 'dein'
+  | 'sein'
+  | 'ihr'
+  | 'unser'
+  | 'euer'
+  | 'Ihr';
 
 export type CaseFilter = 'all' | CaseT;
 export type NumberFilter = 'both' | NumberT;
-export type ArticleFilter = 'both' | ArticleT;
+// Article filter governs the def/indef axis only. Possessives are gated by
+// `possessiveScope` so the user can opt them in/out without touching def/indef.
+export type ArticleFilter = 'both' | 'def' | 'indef';
+export type PossessiveScope = 'off' | 'basic2' | 'core4' | 'all7';
 
 export interface AppSettings {
   caseFilter: CaseFilter;
   numberFilter: NumberFilter;
   articleFilter: ArticleFilter;
+  possessiveScope: PossessiveScope;
 }
 
 export type TranslationDirection = 'de->en' | 'en->de';
@@ -55,6 +70,8 @@ export interface Card {
   number: NumberT;
   case: CaseT;
   articleType: ArticleT;
+  // Only set when articleType === 'poss'.
+  possessive?: PossessiveStem;
   expected: string;
 }
 
@@ -88,6 +105,7 @@ export interface AnswerPrompt {
   case: CaseT;
   number: NumberT;
   articleType: ArticleT;
+  possessive?: PossessiveStem;
 }
 
 export type ActivityEvent =

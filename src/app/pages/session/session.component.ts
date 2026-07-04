@@ -13,7 +13,14 @@ import { ActivityService } from '../../core/activity.service';
 import { CatalogService } from '../../core/catalog.service';
 import { DbService } from '../../core/db.service';
 import { I18nService } from '../../core/i18n.service';
-import { checkAnswer, expectedAnswer } from '../../core/declension';
+import { SpeakButtonComponent } from '../../shared/speak-button.component';
+import {
+  POSSESSIVE_GLOSS_DE,
+  POSSESSIVE_GLOSS_EN,
+  POSSESSIVE_GLOSS_ES,
+  checkAnswer,
+  expectedAnswer,
+} from '../../core/declension';
 import { applyResult, newCardState } from '../../core/srs';
 import {
   AnswerResult,
@@ -47,12 +54,13 @@ const NUMBER_LABEL: Record<string, string> = { sg: 'Singular', pl: 'Plural' };
 const ARTICLE_LABEL: Record<string, string> = {
   def: 'bestimmt',
   indef: 'unbestimmt',
+  poss: 'Possessiv',
 };
 
 @Component({
   selector: 'app-session',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, SpeakButtonComponent],
   template: `
     @if (loaded && session && done) {
       <main class="page page--narrow">
@@ -159,7 +167,10 @@ const ARTICLE_LABEL: Record<string, string> = {
         @if (current) {
           <article class="qcard" [class.qcard--shake]="shaking">
             <div class="qhead">
-              <div class="qhead__noun">{{ current.noun.singular }}</div>
+              <div class="qhead__noun">
+                <span>{{ current.noun.singular }}</span>
+                <app-speak-button [text]="current.noun.singular" size="lg" />
+              </div>
               <div class="qhead__chips">
                 <span class="chip chip--case">
                   <span class="chip__k">{{ chipLabel.case }}</span>
@@ -173,6 +184,15 @@ const ARTICLE_LABEL: Record<string, string> = {
                   <span class="chip__k">{{ chipLabel.art }}</span>
                   <span class="chip__v">{{ articleLabel(current.card.articleType) }}</span>
                 </span>
+                @if (current.card.articleType === 'poss' && current.card.possessive) {
+                  <span class="chip chip--poss">
+                    <span class="chip__k">{{ chipLabel.poss }}</span>
+                    <span class="chip__v">
+                      {{ current.card.possessive }}
+                      <em class="chip__gloss">{{ possessiveGloss(current.card.possessive) }}</em>
+                    </span>
+                  </span>
+                }
               </div>
             </div>
 
@@ -275,10 +295,12 @@ const ARTICLE_LABEL: Record<string, string> = {
                 <div class="feedback__row">
                   <b>{{ i18n.t('session.answer') }}</b>
                   <code>{{ feedback.expected }}</code>
+                  <app-speak-button [text]="feedback.expected" />
                 </div>
                 <div class="feedback__row">
                   <b>{{ i18n.t('session.nominativ') }}</b>
                   <code>{{ nominativeForm(current.noun) }}</code>
+                  <app-speak-button [text]="nominativeForm(current.noun)" />
                 </div>
                 @if (current.noun.english) {
                   <div class="feedback__row feedback__row--translation">
@@ -388,6 +410,23 @@ const ARTICLE_LABEL: Record<string, string> = {
         letter-spacing: 0.02em;
         line-height: 1.4;
       }
+      .chip--poss .chip__v {
+        display: inline-flex;
+        align-items: baseline;
+        gap: 8px;
+      }
+      .chip__gloss {
+        font-style: italic;
+        font-weight: 400;
+        font-size: 11px;
+        color: var(--ink-3, var(--ink-2));
+      }
+      .qhead__noun {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .feedback__row app-speak-button { margin-left: 8px; }
     `,
   ],
 })
@@ -434,7 +473,7 @@ export class SessionComponent implements OnInit, AfterViewInit {
   }
   loaded = false;
 
-  readonly chipLabel = { case: 'CASE', num: 'NUM', art: 'ART' };
+  readonly chipLabel = { case: 'CASE', num: 'NUM', art: 'ART', poss: 'POSS' };
   readonly specialChars = ['ä', 'Ä', 'ö', 'Ö', 'ü', 'Ü', 'ß'];
 
   insertChar(ch: string) {
@@ -458,6 +497,23 @@ export class SessionComponent implements OnInit, AfterViewInit {
   caseLabel(c: string) { return CASE_LABEL[c] ?? c; }
   numberLabel(n: string) { return NUMBER_LABEL[n] ?? n; }
   articleLabel(a: string) { return ARTICLE_LABEL[a] ?? a; }
+  possessiveGloss(stem: string): string {
+    const lang = this.i18n.lang();
+    const table =
+      lang === 'de' ? POSSESSIVE_GLOSS_DE :
+      lang === 'es' ? POSSESSIVE_GLOSS_ES :
+      POSSESSIVE_GLOSS_EN;
+    return (table as Record<string, string>)[stem] ?? '';
+  }
+  private buildTags(prompt: {
+    case: string;
+    number: string;
+    articleType: string;
+    possessive?: string;
+  }): string {
+    const base = `${this.caseLabel(prompt.case)} · ${this.numberLabel(prompt.number)} · ${this.articleLabel(prompt.articleType)}`;
+    return prompt.possessive ? `${base} · ${prompt.possessive}` : base;
+  }
 
   get correctAnswers(): AnswerRow[] {
     return this.answers.filter((a) => a.result === 'correct');
@@ -473,8 +529,8 @@ export class SessionComponent implements OnInit, AfterViewInit {
     return a.rules[0] ?? null;
   }
 
-  get wroteText(): string { return this.i18n.lang() === 'de' ? 'geschrieben' : 'wrote'; }
-  get expectedText(): string { return this.i18n.lang() === 'de' ? 'erwartet' : 'expected'; }
+  get wroteText(): string { return this.i18n.t('session.youWroteShort'); }
+  get expectedText(): string { return this.i18n.t('session.expectedShort'); }
 
   nominativeForm(noun: Noun): string {
     if (noun.pluralOnly) return expectedAnswer(noun, 'pl', 'nom', 'def');
@@ -556,7 +612,7 @@ export class SessionComponent implements OnInit, AfterViewInit {
       // Latest event for each card wins (events come back in id order).
       byCard.set(ev.cardId, {
         noun: ev.prompt.singular,
-        tags: `${this.caseLabel(ev.prompt.case)} · ${this.numberLabel(ev.prompt.number)} · ${this.articleLabel(ev.prompt.articleType)}`,
+        tags: this.buildTags(ev.prompt),
         entered: ev.entered,
         expected: ev.expected,
         result: ev.result,
@@ -634,6 +690,7 @@ export class SessionComponent implements OnInit, AfterViewInit {
         case: cur.card.case,
         number: cur.card.number,
         articleType: cur.card.articleType,
+        ...(cur.card.possessive ? { possessive: cur.card.possessive } : {}),
       },
       entered: '',
       expected: cur.card.expected,
@@ -677,6 +734,7 @@ export class SessionComponent implements OnInit, AfterViewInit {
         case: cur.card.case,
         number: cur.card.number,
         articleType: cur.card.articleType,
+        ...(cur.card.possessive ? { possessive: cur.card.possessive } : {}),
       },
       entered: this.entered,
       expected: cur.card.expected,
@@ -696,7 +754,12 @@ export class SessionComponent implements OnInit, AfterViewInit {
     };
     this.answers.push({
       noun: cur.noun.singular,
-      tags: `${this.caseLabel(cur.card.case)} · ${this.numberLabel(cur.card.number)} · ${this.articleLabel(cur.card.articleType)}`,
+      tags: this.buildTags({
+        case: cur.card.case,
+        number: cur.card.number,
+        articleType: cur.card.articleType,
+        possessive: cur.card.possessive,
+      }),
       entered: this.entered.trim(),
       expected: cur.card.expected,
       result,

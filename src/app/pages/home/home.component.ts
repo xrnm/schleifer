@@ -5,12 +5,14 @@ import { DbService } from '../../core/db.service';
 import { I18nService } from '../../core/i18n.service';
 import { SelectorService } from '../../core/selector.service';
 import { SessionStarterService } from '../../core/session-starter.service';
+import { LOCALE_BY_LANG } from '../../core/i18n.service';
 import { SettingsService } from '../../core/settings.service';
 import {
   ArticleFilter,
   CardState,
   CaseFilter,
   NumberFilter,
+  PossessiveScope,
   Session,
 } from '../../models/types';
 
@@ -21,7 +23,11 @@ const LIST_LIMIT = 10;
 
 const CASE_LABEL: Record<string, string> = { nom: 'Nom', acc: 'Akk', dat: 'Dat' };
 const NUMBER_LABEL: Record<string, string> = { sg: 'Sg', pl: 'Pl' };
-const ARTICLE_LABEL: Record<string, string> = { def: 'best.', indef: 'unbest.' };
+const ARTICLE_LABEL: Record<string, string> = {
+  def: 'best.',
+  indef: 'unbest.',
+  poss: 'poss.',
+};
 
 interface WordRow {
   cardId: string;
@@ -119,6 +125,20 @@ interface WordRow {
                     class="pill"
                     [class.is-active]="settings.settings().articleFilter === opt.value"
                     (click)="setArticle(opt.value)"
+                  >{{ i18n.t(opt.labelKey) }}</button>
+                }
+              </div>
+            </div>
+            <div class="settings-row">
+              <span class="settings-row__k">{{ i18n.t('settings.possessive') }}</span>
+              <div class="settings-pills" role="group" [attr.aria-label]="i18n.t('settings.possessive')">
+                @for (opt of possessiveOptions; track opt.value) {
+                  <button
+                    type="button"
+                    class="pill"
+                    [class.is-active]="settings.settings().possessiveScope === opt.value"
+                    (click)="setPossessive(opt.value)"
+                    [title]="opt.titleKey ? i18n.t(opt.titleKey) : ''"
                   >{{ i18n.t(opt.labelKey) }}</button>
                 }
               </div>
@@ -412,6 +432,16 @@ export class HomeComponent implements OnInit {
     { value: 'def', labelKey: 'settings.article.def' },
     { value: 'indef', labelKey: 'settings.article.indef' },
   ];
+  readonly possessiveOptions: {
+    value: PossessiveScope;
+    labelKey: string;
+    titleKey?: string;
+  }[] = [
+    { value: 'off', labelKey: 'settings.poss.off', titleKey: 'settings.poss.off.title' },
+    { value: 'basic2', labelKey: 'settings.poss.basic2', titleKey: 'settings.poss.basic2.title' },
+    { value: 'core4', labelKey: 'settings.poss.core4', titleKey: 'settings.poss.core4.title' },
+    { value: 'all7', labelKey: 'settings.poss.all7', titleKey: 'settings.poss.all7.title' },
+  ];
 
   filteredDueNow = computed(() => this.dueNow);
 
@@ -422,12 +452,8 @@ export class HomeComponent implements OnInit {
   get inProgressTop(): WordRow[] { return this.inProgress.slice(0, LIST_LIMIT); }
   get recentlyMissedTop(): WordRow[] { return this.recentlyMissed.slice(0, LIST_LIMIT); }
 
-  get enterText() {
-    return this.i18n.lang() === 'de' ? 'zum Absenden' : 'to submit';
-  }
-  get escText() {
-    return this.i18n.lang() === 'de' ? 'zum Überspringen' : 'to skip';
-  }
+  get enterText() { return this.i18n.t('home.kbdHint.enter'); }
+  get escText() { return this.i18n.t('home.kbdHint.esc'); }
 
   toggleDrawer() { this.drawerOpen.update((v) => !v); }
 
@@ -441,6 +467,10 @@ export class HomeComponent implements OnInit {
   }
   setArticle(v: ArticleFilter) {
     this.settings.setArticleFilter(v);
+    void this.refreshDueNow();
+  }
+  setPossessive(v: PossessiveScope) {
+    this.settings.setPossessiveScope(v);
     void this.refreshDueNow();
   }
 
@@ -502,10 +532,12 @@ export class HomeComponent implements OnInit {
       if (!card) continue;
       const noun = this.catalog.noun(card.nounId);
       if (!noun) continue;
+      const base = `${CASE_LABEL[card.case]} · ${NUMBER_LABEL[card.number]} · ${ARTICLE_LABEL[card.articleType]}`;
+      const tags = card.possessive ? `${base} · ${card.possessive}` : base;
       rows.push({
         cardId: s.cardId,
         noun: noun.singular,
-        tags: `${CASE_LABEL[card.case]} · ${NUMBER_LABEL[card.number]} · ${ARTICLE_LABEL[card.articleType]}`,
+        tags,
         lastShownAt: s.lastShownAt,
         due: s.due,
         reps: s.reps,
@@ -551,7 +583,7 @@ export class HomeComponent implements OnInit {
     const yesterday = new Date(today);
     yesterday.setDate(today.getDate() - 1);
     const isYesterday = d.toDateString() === yesterday.toDateString();
-    const locale = this.i18n.lang() === 'de' ? 'de-DE' : undefined;
+    const locale = LOCALE_BY_LANG[this.i18n.lang()];
     const time = d.toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' });
     if (isToday) return `${this.i18n.t('home.today')} ${time}`;
     if (isYesterday) return `${this.i18n.t('home.yesterday')} ${time}`;

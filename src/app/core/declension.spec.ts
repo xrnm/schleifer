@@ -1,9 +1,11 @@
 import {
+  POSSESSIVE_STEMS,
   checkAnswer,
   dativePlural,
   expectedAnswer,
   generateCardsForNoun,
   levenshtein,
+  possessiveForm,
 } from './declension';
 import { Card, Noun } from '../models/types';
 
@@ -109,19 +111,101 @@ describe('expectedAnswer', () => {
 });
 
 describe('generateCardsForNoun', () => {
-  it('generates 9 cards for standard noun', () => {
-    expect(generateCardsForNoun(tisch).length).toBe(9);
+  // 3 cases × (1 def + 1 indef + 7 poss) = 27 sg + 3 cases × (1 def + 7 poss) = 24 pl.
+  it('generates def + indef + 7 possessive cards per (case, number) slot', () => {
+    const cards = generateCardsForNoun(tisch);
+    expect(cards.length).toBe(51);
+    expect(cards.filter(c => c.articleType === 'def').length).toBe(6);
+    expect(cards.filter(c => c.articleType === 'indef').length).toBe(3);
+    expect(cards.filter(c => c.articleType === 'poss').length).toBe(42);
   });
-  it('generates 6 cards for mass noun (no plural)', () => {
+  it('generates 27 cards for mass noun (no plural)', () => {
+    // sg only: 3 cases × (def + indef + 7 poss) = 27.
     const cards = generateCardsForNoun(deutsch);
-    expect(cards.length).toBe(6);
+    expect(cards.length).toBe(27);
     expect(cards.every(c => c.number === 'sg')).toBe(true);
   });
-  it('generates 3 cards for plural-only noun', () => {
+  it('generates 24 cards for plural-only noun (def + 7 poss × 3 cases)', () => {
     const cards = generateCardsForNoun(leute);
-    expect(cards.length).toBe(3);
+    expect(cards.length).toBe(24);
     expect(cards.every(c => c.number === 'pl')).toBe(true);
-    expect(cards.every(c => c.articleType === 'def')).toBe(true);
+  });
+  it('possessive card carries the stem and a uniquely-ID\'d expected form', () => {
+    const cards = generateCardsForNoun(tisch);
+    const meinNomSg = cards.find(c => c.articleType === 'poss' && c.possessive === 'mein' && c.case === 'nom' && c.number === 'sg');
+    expect(meinNomSg).toBeDefined();
+    expect(meinNomSg!.expected).toBe('mein Tisch');
+    expect(meinNomSg!.id).toContain('poss:mein');
+  });
+});
+
+describe('possessiveForm', () => {
+  it('mein (masculine singular cases)', () => {
+    expect(possessiveForm('mein', 'm', 'sg', 'nom')).toBe('mein');
+    expect(possessiveForm('mein', 'm', 'sg', 'acc')).toBe('meinen');
+    expect(possessiveForm('mein', 'm', 'sg', 'dat')).toBe('meinem');
+  });
+  it('mein (feminine singular cases)', () => {
+    expect(possessiveForm('mein', 'f', 'sg', 'nom')).toBe('meine');
+    expect(possessiveForm('mein', 'f', 'sg', 'acc')).toBe('meine');
+    expect(possessiveForm('mein', 'f', 'sg', 'dat')).toBe('meiner');
+  });
+  it('mein (neuter singular cases)', () => {
+    expect(possessiveForm('mein', 'n', 'sg', 'nom')).toBe('mein');
+    expect(possessiveForm('mein', 'n', 'sg', 'acc')).toBe('mein');
+    expect(possessiveForm('mein', 'n', 'sg', 'dat')).toBe('meinem');
+  });
+  it('plural endings ignore the noun\'s gender', () => {
+    expect(possessiveForm('mein', 'm', 'pl', 'nom')).toBe('meine');
+    expect(possessiveForm('mein', 'f', 'pl', 'acc')).toBe('meine');
+    expect(possessiveForm('mein', 'n', 'pl', 'dat')).toBe('meinen');
+  });
+  it('euer drops the middle -e- when an ending is attached', () => {
+    expect(possessiveForm('euer', 'm', 'sg', 'nom')).toBe('euer');
+    expect(possessiveForm('euer', 'm', 'sg', 'acc')).toBe('euren');
+    expect(possessiveForm('euer', 'm', 'sg', 'dat')).toBe('eurem');
+    expect(possessiveForm('euer', 'f', 'sg', 'nom')).toBe('eure');
+    expect(possessiveForm('euer', 'f', 'sg', 'dat')).toBe('eurer');
+    expect(possessiveForm('euer', 'n', 'sg', 'nom')).toBe('euer');
+    expect(possessiveForm('euer', 'n', 'pl', 'dat')).toBe('euren');
+  });
+  it('unser keeps its -e- (only euer is irregular)', () => {
+    expect(possessiveForm('unser', 'm', 'sg', 'acc')).toBe('unseren');
+    expect(possessiveForm('unser', 'f', 'sg', 'dat')).toBe('unserer');
+    expect(possessiveForm('unser', 'n', 'pl', 'dat')).toBe('unseren');
+  });
+  it('formal Ihr keeps the capital', () => {
+    expect(possessiveForm('Ihr', 'f', 'sg', 'dat')).toBe('Ihrer');
+    expect(possessiveForm('Ihr', 'm', 'pl', 'dat')).toBe('Ihren');
+  });
+  it('covers all stems in the canonical list', () => {
+    expect(POSSESSIVE_STEMS).toEqual(
+      ['mein', 'dein', 'sein', 'ihr', 'unser', 'euer', 'Ihr'],
+    );
+  });
+});
+
+describe('expectedAnswer for possessives', () => {
+  it('handles masculine nouns', () => {
+    expect(expectedAnswer(tisch, 'sg', 'acc', 'poss', 'mein')).toBe('meinen Tisch');
+    expect(expectedAnswer(tisch, 'sg', 'dat', 'poss', 'dein')).toBe('deinem Tisch');
+  });
+  it('handles feminine nouns', () => {
+    expect(expectedAnswer(frau, 'sg', 'nom', 'poss', 'sein')).toBe('seine Frau');
+    expect(expectedAnswer(frau, 'sg', 'dat', 'poss', 'ihr')).toBe('ihrer Frau');
+  });
+  it('handles neuter nouns', () => {
+    expect(expectedAnswer(haus, 'sg', 'acc', 'poss', 'Ihr')).toBe('Ihr Haus');
+    expect(expectedAnswer(haus, 'sg', 'dat', 'poss', 'unser')).toBe('unserem Haus');
+  });
+  it('handles plurals with dative mutation', () => {
+    expect(expectedAnswer(tisch, 'pl', 'dat', 'poss', 'mein')).toBe('meinen Tischen');
+    expect(expectedAnswer(haus, 'pl', 'dat', 'poss', 'euer')).toBe('euren Häusern');
+    expect(expectedAnswer(auto, 'pl', 'dat', 'poss', 'mein')).toBe('meinen Autos');
+  });
+  it('handles plural-only nouns', () => {
+    expect(expectedAnswer(leute, 'pl', 'nom', 'poss', 'mein')).toBe('meine Leute');
+    expect(expectedAnswer(leute, 'pl', 'dat', 'poss', 'mein')).toBe('meinen Leuten');
   });
 });
 

@@ -12,6 +12,7 @@ import { ActivityService } from '../../core/activity.service';
 import { CatalogService } from '../../core/catalog.service';
 import { DbService } from '../../core/db.service';
 import { I18nService } from '../../core/i18n.service';
+import { SpeakButtonComponent } from '../../shared/speak-button.component';
 import { applyResult, newCardState } from '../../core/srs';
 import {
   buildTranslationQuestion,
@@ -40,7 +41,7 @@ interface AnswerRow {
 @Component({
   selector: 'app-vokabular-session',
   standalone: true,
-  imports: [],
+  imports: [SpeakButtonComponent],
   template: `
     @if (loaded && session && done) {
       <main class="page page--narrow">
@@ -129,7 +130,12 @@ interface AnswerRow {
                   ? i18n.t('vokabular.prompt.de')
                   : i18n.t('vokabular.prompt.en') }}
               </div>
-              <div class="qhead__noun vk-prompt">{{ current.question.prompt }}</div>
+              <div class="qhead__noun vk-prompt">
+                <span>{{ current.question.prompt }}</span>
+                @if (current.question.direction === 'de->en') {
+                  <app-speak-button [text]="current.question.prompt" size="lg" />
+                }
+              </div>
             </div>
 
             <div class="vk-choices">
@@ -164,6 +170,9 @@ interface AnswerRow {
                 <div class="feedback__row">
                   <b>{{ i18n.t('vokabular.answerLabel') }}</b>
                   <code>{{ feedback.expected }}</code>
+                  @if (current.question.direction === 'en->de') {
+                    <app-speak-button [text]="feedback.expected" />
+                  }
                 </div>
               </div>
 
@@ -276,6 +285,13 @@ interface AnswerRow {
         font-family: var(--font-mono);
         font-size: 12.5px;
       }
+      .qhead__noun.vk-prompt {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+      }
+      .feedback__row app-speak-button { margin-left: 8px; }
     `,
   ],
 })
@@ -307,8 +323,8 @@ export class VokabularSessionComponent implements OnInit, AfterViewInit {
   get missedAnswers(): AnswerRow[] {
     return this.answers.filter((a) => a.result !== 'correct');
   }
-  get wroteText(): string { return this.i18n.lang() === 'de' ? 'gewählt' : 'picked'; }
-  get expectedText(): string { return this.i18n.lang() === 'de' ? 'richtig' : 'correct'; }
+  get wroteText(): string { return this.i18n.t('vokabular.pickedShort'); }
+  get expectedText(): string { return this.i18n.t('vokabular.correctShort'); }
 
   choiceLetter(i: number): string {
     return String.fromCharCode('A'.charCodeAt(0) + i);

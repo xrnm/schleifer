@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { I18nService } from './core/i18n.service';
+import { I18nService, LANGS, Lang } from './core/i18n.service';
 
 @Component({
   selector: 'app-root',
@@ -28,17 +28,17 @@ import { I18nService } from './core/i18n.service';
             <span class="nav__label">{{ i18n.t('nav.data') }}</span>
           </a>
 
-          <label class="lang-slider" [title]="i18n.lang() === 'de' ? 'Sprache' : 'Language'">
-            <span class="lang-label" [class.active]="i18n.lang() === 'en'">EN</span>
-            <input
-              type="checkbox"
-              [checked]="i18n.lang() === 'de'"
-              (change)="onToggle($event)"
-              [attr.aria-label]="i18n.lang() === 'de' ? 'Sprache umschalten' : 'Toggle language'"
-            />
-            <span class="track"><span class="thumb"></span></span>
-            <span class="lang-label" [class.active]="i18n.lang() === 'de'">DE</span>
-          </label>
+          <div class="lang-picker" role="group" [attr.aria-label]="langAriaLabel">
+            @for (l of langs; track l) {
+              <button
+                type="button"
+                class="lang-pill"
+                [class.is-active]="i18n.lang() === l"
+                [attr.aria-pressed]="i18n.lang() === l"
+                (click)="setLang(l)"
+              >{{ langCode(l) }}</button>
+            }
+          </div>
         </nav>
       </div>
     </header>
@@ -154,72 +154,72 @@ import { I18nService } from './core/i18n.service';
       nav.nav a.is-active .nav__label::before { content: '[ '; }
       nav.nav a.is-active .nav__label::after  { content: ' ]'; }
 
-      .lang-slider {
+      .lang-picker {
         display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-        cursor: pointer;
-        user-select: none;
-        font-family: var(--font-mono);
-        font-weight: 700;
-        font-size: 10px;
-        letter-spacing: 0.16em;
-        color: var(--ink-3);
+        align-items: stretch;
         margin-left: 0.5rem;
         padding-left: 12px;
         border-left: 1px solid var(--rule);
+        gap: 0;
+      }
+      .lang-pill {
+        background: transparent;
+        border: 1px solid var(--rule);
+        border-right-width: 0;
+        padding: 4px 8px;
+        font: 700 10px/1 var(--font-mono);
+        letter-spacing: 0.16em;
+        color: var(--ink-3);
+        text-transform: uppercase;
+        cursor: pointer;
+        transition:
+          color var(--dur-fast) var(--ease-standard),
+          background var(--dur-fast) var(--ease-standard),
+          border-color var(--dur-fast) var(--ease-standard);
+      }
+      .lang-pill:last-child { border-right-width: 1px; }
+      .lang-pill:hover { color: var(--ink); background: var(--bg-2); }
+      .lang-pill.is-active {
+        color: var(--bg);
+        background: var(--orange);
+        border-color: var(--orange);
+      }
+      .lang-pill:focus-visible {
+        outline: 2px solid var(--orange);
+        outline-offset: 2px;
+        position: relative;
+        z-index: 1;
       }
       @media (max-width: 640px) {
-        .lang-slider {
+        .lang-picker {
           margin-left: 0.25rem;
           padding-left: 8px;
-          gap: 0.3rem;
         }
+        .lang-pill { padding: 4px 6px; font-size: 9px; }
         .footer__inner {
           padding: 14px 16px;
         }
         .footer__credit, .footer__link { font-size: 10px; letter-spacing: 0.12em; }
         .footer__sep { display: none; }
       }
-      .lang-slider input { display: none; }
-      .lang-label.active { color: var(--orange); }
-      .lang-slider .track {
-        position: relative;
-        width: 28px;
-        height: 14px;
-        background: var(--bg-2);
-        border: 1px solid var(--rule);
-        border-radius: 0;
-        transition: background var(--dur-fast) var(--ease-standard),
-                    border-color var(--dur-fast) var(--ease-standard);
-      }
-      .lang-slider .thumb {
-        position: absolute;
-        top: 1px;
-        left: 1px;
-        width: 10px;
-        height: 10px;
-        background: var(--ink-2);
-        border-radius: 0;
-        transition: transform var(--dur-fast) var(--ease-standard),
-                    background var(--dur-fast) var(--ease-standard);
-      }
-      .lang-slider input:checked ~ .track {
-        background: var(--bg-2);
-        border-color: var(--orange);
-      }
-      .lang-slider input:checked ~ .track .thumb {
-        transform: translateX(14px);
-        background: var(--orange);
-      }
     `,
   ],
 })
 export class AppComponent {
   i18n = inject(I18nService);
+  readonly langs: Lang[] = LANGS;
 
-  onToggle(ev: Event) {
-    const checked = (ev.target as HTMLInputElement).checked;
-    this.i18n.setLang(checked ? 'de' : 'en');
+  get langAriaLabel(): string {
+    switch (this.i18n.lang()) {
+      case 'de': return 'Sprache umschalten';
+      case 'es': return 'Cambiar idioma';
+      default: return 'Toggle language';
+    }
+  }
+
+  langCode(l: Lang): string { return l.toUpperCase(); }
+
+  setLang(l: Lang) {
+    this.i18n.setLang(l);
   }
 }

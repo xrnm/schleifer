@@ -5,6 +5,7 @@ import {
   Gender,
   Noun,
   NumberT,
+  PossessiveStem,
 } from '../models/types';
 
 const DEF_SG: Record<Gender, Record<CaseT, string>> = {
@@ -19,6 +20,65 @@ const INDEF_SG: Record<Gender, Record<CaseT, string>> = {
   n: { nom: 'ein', acc: 'ein', dat: 'einem' },
 };
 
+// Possessives ("Possessivartikel"/"ein-Wörter") decline like `ein`: empty
+// ending in the masc/neut nominative and neut accusative, otherwise -e/-en/-em/-er.
+// Plurals always take -e/-en endings regardless of the noun's gender.
+const POSS_END_SG: Record<Gender, Record<CaseT, string>> = {
+  m: { nom: '',  acc: 'en', dat: 'em' },
+  f: { nom: 'e', acc: 'e',  dat: 'er' },
+  n: { nom: '',  acc: '',   dat: 'em' },
+};
+const POSS_END_PL: Record<CaseT, string> = { nom: 'e', acc: 'e', dat: 'en' };
+
+// Full set of possessive stems used by the drill. `ihr` covers her & their —
+// the declension is identical, so they share a single stem.
+export const POSSESSIVE_STEMS: PossessiveStem[] = [
+  'mein', 'dein', 'sein', 'ihr', 'unser', 'euer', 'Ihr',
+];
+
+// English gloss for each possessive — shown next to the prompt so the learner
+// knows which one to type when the same stem (e.g. `ihr`) covers two persons.
+export const POSSESSIVE_GLOSS_EN: Record<PossessiveStem, string> = {
+  mein: 'my',
+  dein: 'your (sg)',
+  sein: 'his / its',
+  ihr: 'her / their',
+  unser: 'our',
+  euer: 'your (pl)',
+  Ihr: 'your (formal)',
+};
+export const POSSESSIVE_GLOSS_DE: Record<PossessiveStem, string> = {
+  mein: 'mein',
+  dein: 'dein (du)',
+  sein: 'sein / es',
+  ihr: 'ihr (sie/sie pl)',
+  unser: 'unser',
+  euer: 'euer (ihr)',
+  Ihr: 'Ihr (Sie)',
+};
+export const POSSESSIVE_GLOSS_ES: Record<PossessiveStem, string> = {
+  mein: 'mi',
+  dein: 'tu (tú)',
+  sein: 'su (él / ello)',
+  ihr: 'su (ella / ellos)',
+  unser: 'nuestro/-a',
+  euer: 'vuestro/-a',
+  Ihr: 'su (usted)',
+};
+
+export function possessiveForm(
+  stem: PossessiveStem,
+  gender: Gender,
+  number: NumberT,
+  caseT: CaseT,
+): string {
+  const ending = number === 'pl' ? POSS_END_PL[caseT] : POSS_END_SG[gender][caseT];
+  // `euer` drops the middle -e- whenever an ending is attached: euer → eure,
+  // euren, eurem, eurer, eures. Without an ending it stays as `euer`.
+  if (stem === 'euer' && ending !== '') return 'eur' + ending;
+  return stem + ending;
+}
+
 // Dative plural: append -n unless plural already ends in -n or -s.
 export function dativePlural(plural: string): string {
   if (/[ns]$/.test(plural)) return plural;
@@ -30,7 +90,12 @@ export function articleFor(
   number: NumberT,
   caseT: CaseT,
   articleType: ArticleT,
+  possessive?: PossessiveStem,
 ): string {
+  if (articleType === 'poss') {
+    if (!possessive) throw new Error('possessive stem required for poss articleType');
+    return possessiveForm(possessive, gender, number, caseT);
+  }
   if (number === 'pl') return DEF_PL[caseT];
   return articleType === 'def' ? DEF_SG[gender][caseT] : INDEF_SG[gender][caseT];
 }
@@ -40,8 +105,9 @@ export function expectedAnswer(
   number: NumberT,
   caseT: CaseT,
   articleType: ArticleT,
+  possessive?: PossessiveStem,
 ): string {
-  const article = articleFor(noun.gender, number, caseT, articleType);
+  const article = articleFor(noun.gender, number, caseT, articleType, possessive);
   if (number === 'sg') return `${article} ${noun.singular}`;
   const pl = noun.plural ?? noun.singular;
   const form = caseT === 'dat' ? dativePlural(pl) : pl;
@@ -53,7 +119,11 @@ export function cardId(
   number: NumberT,
   caseT: CaseT,
   articleType: ArticleT,
+  possessive?: PossessiveStem,
 ): string {
+  if (articleType === 'poss') {
+    return `${nounId}|${number}|${caseT}|poss:${possessive}`;
+  }
   return `${nounId}|${number}|${caseT}|${articleType}`;
 }
 
@@ -81,6 +151,17 @@ export function generateCardsForNoun(noun: Noun): Card[] {
         articleType: 'indef',
         expected: expectedAnswer(noun, 'sg', c, 'indef'),
       });
+      for (const stem of POSSESSIVE_STEMS) {
+        cards.push({
+          id: cardId(noun.id, 'sg', c, 'poss', stem),
+          nounId: noun.id,
+          number: 'sg',
+          case: c,
+          articleType: 'poss',
+          possessive: stem,
+          expected: expectedAnswer(noun, 'sg', c, 'poss', stem),
+        });
+      }
     }
   }
   if (hasPlural) {
@@ -93,6 +174,17 @@ export function generateCardsForNoun(noun: Noun): Card[] {
         articleType: 'def',
         expected: expectedAnswer(noun, 'pl', c, 'def'),
       });
+      for (const stem of POSSESSIVE_STEMS) {
+        cards.push({
+          id: cardId(noun.id, 'pl', c, 'poss', stem),
+          nounId: noun.id,
+          number: 'pl',
+          case: c,
+          articleType: 'poss',
+          possessive: stem,
+          expected: expectedAnswer(noun, 'pl', c, 'poss', stem),
+        });
+      }
     }
   }
   return cards;
@@ -124,8 +216,9 @@ export function checkAnswer(
   // Article-system mismatch: the user typed the def/indef form when the card
   // asked for the other. Sentence-case on the article's first letter is
   // treated as free, and a single typo in the noun is forgiven so a stray
-  // capital or letter slip doesn't cancel detection.
-  if (noun !== undefined && card !== undefined) {
+  // capital or letter slip doesn't cancel detection. Possessive cards opt
+  // out — the def/indef-only mismatch notice text doesn't fit them.
+  if (noun !== undefined && card !== undefined && card.articleType !== 'poss') {
     const eParts = splitArticleNoun(e);
     if (card.number === 'sg') {
       const opposite: ArticleT = card.articleType === 'def' ? 'indef' : 'def';
@@ -139,10 +232,10 @@ export function checkAnswer(
         return { kind: 'article-mismatch', usedArticleType: opposite };
       }
     } else {
-      // Plural cards are always def. Detect the only possible swap: an
-      // indef-singular article (any case/gender) paired with the right
-      // plural-noun form. Loose article match — `ein/eine/einer/einen/einem/eines`
-      // are all unambiguously indefinite, regardless of which case/gender.
+      // Plural def cards: detect an indef-singular article paired with the
+      // right plural-noun form. Loose article match —
+      // `ein/eine/einer/einen/einem/eines` are all unambiguously indefinite,
+      // regardless of which case/gender.
       const xParts = splitArticleNoun(expected);
       if (
         INDEF_ARTICLE_RE.test(eParts.article) &&

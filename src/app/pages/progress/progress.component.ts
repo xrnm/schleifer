@@ -11,7 +11,11 @@ const MASTERY_REPS = 4;
 
 const CASE_LABEL: Record<string, string> = { nom: 'Nom', acc: 'Akk', dat: 'Dat' };
 const NUMBER_LABEL: Record<string, string> = { sg: 'Sg', pl: 'Pl' };
-const ARTICLE_LABEL: Record<string, string> = { def: 'best.', indef: 'unbest.' };
+const ARTICLE_LABEL: Record<string, string> = {
+  def: 'best.',
+  indef: 'unbest.',
+  poss: 'poss.',
+};
 
 interface Row {
   cardId: string;
@@ -250,10 +254,12 @@ export class ProgressComponent implements OnInit {
       if (!card) continue;
       const noun = this.catalog.noun(card.nounId);
       if (!noun) continue;
+      const base = `${CASE_LABEL[card.case]} · ${NUMBER_LABEL[card.number]} · ${ARTICLE_LABEL[card.articleType]}`;
+      const tags = card.possessive ? `${base} · ${card.possessive}` : base;
       rows.push({
         cardId: s.cardId,
         noun: noun.singular,
-        tags: `${CASE_LABEL[card.case]} · ${NUMBER_LABEL[card.number]} · ${ARTICLE_LABEL[card.articleType]}`,
+        tags,
         lastShownAt: s.lastShownAt,
         due: s.due,
         reps: s.reps,

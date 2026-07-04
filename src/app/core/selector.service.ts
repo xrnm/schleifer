@@ -4,6 +4,8 @@ import {
   Card,
   CardState,
   Noun,
+  PossessiveScope,
+  PossessiveStem,
 } from '../models/types';
 import { CatalogService } from './catalog.service';
 import { DbService } from './db.service';
@@ -253,8 +255,24 @@ export class SelectorService {
 function matchesFilters(card: Card, f: AppSettings): boolean {
   if (f.caseFilter !== 'all' && card.case !== f.caseFilter) return false;
   if (f.numberFilter !== 'both' && card.number !== f.numberFilter) return false;
+  if (card.articleType === 'poss') {
+    // Possessive cards live behind their own scope knob, independent of the
+    // def/indef article filter.
+    if (!card.possessive) return false;
+    return stemInScope(card.possessive, f.possessiveScope);
+  }
   if (f.articleFilter !== 'both' && card.articleType !== f.articleFilter) return false;
   return true;
+}
+
+function stemInScope(stem: PossessiveStem, scope: PossessiveScope): boolean {
+  switch (scope) {
+    case 'off': return false;
+    case 'basic2': return stem === 'mein' || stem === 'dein';
+    case 'core4':
+      return stem === 'mein' || stem === 'dein' || stem === 'sein' || stem === 'ihr';
+    case 'all7': return true;
+  }
 }
 
 function shuffleAvoidingAdjacent(cards: Card[]): Card[] {

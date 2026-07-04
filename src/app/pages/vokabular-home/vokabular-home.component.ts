@@ -2,7 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { CatalogService } from '../../core/catalog.service';
 import { DbService } from '../../core/db.service';
-import { I18nService } from '../../core/i18n.service';
+import { I18nService, LOCALE_BY_LANG } from '../../core/i18n.service';
 import { SelectorService } from '../../core/selector.service';
 import { SessionStarterService } from '../../core/session-starter.service';
 import { Session } from '../../models/types';
@@ -178,7 +178,7 @@ export class VokabularHomeComponent implements OnInit {
     const yesterday = new Date(today);
     yesterday.setDate(today.getDate() - 1);
     const isYesterday = d.toDateString() === yesterday.toDateString();
-    const locale = this.i18n.lang() === 'de' ? 'de-DE' : undefined;
+    const locale = LOCALE_BY_LANG[this.i18n.lang()];
     const time = d.toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' });
     if (isToday) return `${this.i18n.t('home.today')} ${time}`;
     if (isYesterday) return `${this.i18n.t('home.yesterday')} ${time}`;

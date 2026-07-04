@@ -4,6 +4,7 @@ import {
   ArticleFilter,
   CaseFilter,
   NumberFilter,
+  PossessiveScope,
 } from '../models/types';
 
 const STORAGE_KEY = 'schleifer.settings';
@@ -12,6 +13,7 @@ const DEFAULTS: AppSettings = {
   caseFilter: 'all',
   numberFilter: 'both',
   articleFilter: 'both',
+  possessiveScope: 'off',
 };
 
 @Injectable({ providedIn: 'root' })
@@ -33,6 +35,11 @@ export class SettingsService {
     this.persist();
   }
 
+  setPossessiveScope(v: PossessiveScope) {
+    this.settings.update((s) => ({ ...s, possessiveScope: v }));
+    this.persist();
+  }
+
   private persist() {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(this.settings())); } catch {}
   }
@@ -46,6 +53,9 @@ export class SettingsService {
         caseFilter: isCaseFilter(parsed.caseFilter) ? parsed.caseFilter : DEFAULTS.caseFilter,
         numberFilter: isNumberFilter(parsed.numberFilter) ? parsed.numberFilter : DEFAULTS.numberFilter,
         articleFilter: isArticleFilter(parsed.articleFilter) ? parsed.articleFilter : DEFAULTS.articleFilter,
+        possessiveScope: isPossessiveScope(parsed.possessiveScope)
+          ? parsed.possessiveScope
+          : DEFAULTS.possessiveScope,
       };
     } catch {
       return { ...DEFAULTS };
@@ -61,4 +71,7 @@ function isNumberFilter(v: unknown): v is NumberFilter {
 }
 function isArticleFilter(v: unknown): v is ArticleFilter {
   return v === 'both' || v === 'def' || v === 'indef';
+}
+function isPossessiveScope(v: unknown): v is PossessiveScope {
+  return v === 'off' || v === 'basic2' || v === 'core4' || v === 'all7';
 }

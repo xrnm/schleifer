@@ -1,6 +1,17 @@
 import { Injectable, signal } from '@angular/core';
 
-export type Lang = 'en' | 'de';
+export type Lang = 'en' | 'de' | 'es';
+
+// Order matters: rotation cycles through these in array order, so the user
+// sees EN → DE → ES → EN when they keep toggling.
+export const LANGS: Lang[] = ['en', 'de', 'es'];
+
+// BCP-47 locale used for `Intl.RelativeTimeFormat` and `toLocaleDateString`.
+export const LOCALE_BY_LANG: Record<Lang, string> = {
+  en: 'en-US',
+  de: 'de-DE',
+  es: 'es-ES',
+};
 
 const STORAGE_KEY = 'schleifer.lang';
 
@@ -42,6 +53,8 @@ const DICT: Record<Lang, Record<string, string>> = {
     'home.h1': 'Grind your German cases.',
     'home.sub': 'Type the article and the noun for the case shown. {n} nouns in the corpus, weighted by importance. Misses come back until you get them right.',
     'home.kbdHint': 'Enter to submit · Esc to skip',
+    'home.kbdHint.enter': 'to submit',
+    'home.kbdHint.esc': 'to skip',
     'home.lead': 'Drill German noun cases. {n} nouns loaded.',
     'home.start': 'Start session ({n} cards)',
     'home.starting': 'Starting…',
@@ -81,6 +94,15 @@ const DICT: Record<Lang, Record<string, string>> = {
     'settings.article.both': 'Both',
     'settings.article.def': 'Definite',
     'settings.article.indef': 'Indefinite',
+    'settings.possessive': 'Possessive',
+    'settings.poss.off': 'Off',
+    'settings.poss.off.title': 'No possessive cards (mein, dein, …)',
+    'settings.poss.basic2': 'mein/dein',
+    'settings.poss.basic2.title': 'Just mein (my) and dein (your)',
+    'settings.poss.core4': 'Core 4',
+    'settings.poss.core4.title': 'mein, dein, sein, ihr — singular owners',
+    'settings.poss.all7': 'All',
+    'settings.poss.all7.title': 'mein, dein, sein, ihr, unser, euer, Ihr',
 
     'vokabular.eyebrow': 'SCHLEIFER · VOCABULARY',
     'vokabular.h1': 'Translate, pick the match.',
@@ -103,9 +125,12 @@ const DICT: Record<Lang, Record<string, string>> = {
     'session.articleMismatch.usedDef': 'You answered with the definite article (der/die/das…). This card asked for the indefinite (ein…).',
     'session.articleMismatch.usedIndef': 'You answered with the indefinite article (ein…). This card asked for the definite (der/die/das…).',
     'session.youWrote': 'You wrote',
+    'session.youWroteShort': 'wrote',
+    'session.expectedShort': 'expected',
     'session.answer': 'Answer:',
     'session.nominativ': 'Nominativ:',
     'session.translation': 'Translation:',
+    'a11y.listen': 'Listen',
     'session.rule': 'Rule {n}:',
     'session.notFound': 'Session not found.',
     'session.loading': 'Loading…',
@@ -130,6 +155,8 @@ const DICT: Record<Lang, Record<string, string>> = {
     'vokabular.result.correct': 'Correct',
     'vokabular.result.incorrect': 'Incorrect',
     'vokabular.summaryH1': 'Nice work.',
+    'vokabular.pickedShort': 'picked',
+    'vokabular.correctShort': 'correct',
 
     'data.title': 'Data',
     'data.lead':
@@ -212,6 +239,8 @@ const DICT: Record<Lang, Record<string, string>> = {
     'home.h1': 'Schleif deine deutschen Fälle.',
     'home.sub': 'Tippe den Artikel und das Nomen für den angezeigten Fall. {n} Nomen im Korpus, gewichtet nach Wichtigkeit. Verfehlte Karten kommen wieder, bis du sie kannst.',
     'home.kbdHint': 'Enter zum Absenden · Esc zum Überspringen',
+    'home.kbdHint.enter': 'zum Absenden',
+    'home.kbdHint.esc': 'zum Überspringen',
     'home.lead': 'Übe deutsche Nomenfälle. {n} Nomen geladen.',
     'home.start': 'Sitzung starten ({n} Karten)',
     'home.starting': 'Beginnt…',
@@ -251,6 +280,15 @@ const DICT: Record<Lang, Record<string, string>> = {
     'settings.article.both': 'Beide',
     'settings.article.def': 'Bestimmt',
     'settings.article.indef': 'Unbestimmt',
+    'settings.possessive': 'Possessiv',
+    'settings.poss.off': 'Aus',
+    'settings.poss.off.title': 'Keine Possessivkarten (mein, dein, …)',
+    'settings.poss.basic2': 'mein/dein',
+    'settings.poss.basic2.title': 'Nur mein und dein',
+    'settings.poss.core4': 'Kern 4',
+    'settings.poss.core4.title': 'mein, dein, sein, ihr — Singular',
+    'settings.poss.all7': 'Alle',
+    'settings.poss.all7.title': 'mein, dein, sein, ihr, unser, euer, Ihr',
 
     'vokabular.eyebrow': 'SCHLEIFER · VOKABULAR',
     'vokabular.h1': 'Übersetzen, passendes wählen.',
@@ -273,9 +311,12 @@ const DICT: Record<Lang, Record<string, string>> = {
     'session.articleMismatch.usedDef': 'Du hast den bestimmten Artikel (der/die/das…) verwendet. Diese Karte verlangt den unbestimmten (ein…).',
     'session.articleMismatch.usedIndef': 'Du hast den unbestimmten Artikel (ein…) verwendet. Diese Karte verlangt den bestimmten (der/die/das…).',
     'session.youWrote': 'Du hast geschrieben',
+    'session.youWroteShort': 'geschrieben',
+    'session.expectedShort': 'erwartet',
     'session.answer': 'Antwort:',
     'session.nominativ': 'Nominativ:',
     'session.translation': 'Übersetzung:',
+    'a11y.listen': 'Anhören',
     'session.rule': 'Regel {n}:',
     'session.notFound': 'Sitzung nicht gefunden.',
     'session.loading': 'Lädt…',
@@ -300,6 +341,8 @@ const DICT: Record<Lang, Record<string, string>> = {
     'vokabular.result.correct': 'Richtig',
     'vokabular.result.incorrect': 'Falsch',
     'vokabular.summaryH1': 'Gut gemacht.',
+    'vokabular.pickedShort': 'gewählt',
+    'vokabular.correctShort': 'richtig',
 
     'data.title': 'Daten',
     'data.lead':
@@ -344,6 +387,194 @@ const DICT: Record<Lang, Record<string, string>> = {
     'gender.masculine': 'maskulin',
     'gender.neuter': 'neutrum',
     'gender.varies': 'variiert',
+  },
+  es: {
+    'app.brand': 'Schleifer',
+    'nav.home': 'Inicio',
+    'nav.deklination': 'Declinación',
+    'nav.vokabular': 'Vocabulario',
+    'nav.progress': 'Progreso',
+    'nav.rules': 'Reglas',
+    'nav.data': 'Datos',
+
+    'progress.eyebrow': 'PROGRESO · LÍNEA DE TIEMPO',
+    'progress.title': 'Tu línea de tiempo',
+    'progress.lead':
+      'Cada tarjeta que has repasado, cuándo apareció por última vez y cuándo vuelve. Solo lectura — la selección se gestiona sola.',
+    'progress.empty': 'Aún no hay nada. Empieza una sesión para llenar esta vista.',
+    'progress.stats.reviewed': 'repasadas',
+    'progress.stats.learning': 'en proceso',
+    'progress.stats.mastered': 'dominadas',
+    'progress.stats.dueNow': 'pendientes ahora',
+    'progress.group.dueNow': 'Pendientes ahora',
+    'progress.group.thisWeek': 'Esta semana',
+    'progress.group.later': 'Más adelante',
+    'progress.lastSeen': 'última',
+    'progress.nextDue': 'siguiente',
+    'progress.now': 'ahora',
+    'progress.streak': 'racha',
+    'progress.lapses': 'fallos',
+    'progress.drillDueNow': 'Practicar estas ({n})',
+
+    'app.brandSub': 'Deutsch · Kasus',
+    'eyebrow.dailyDrill': 'SCHLEIFER · PRÁCTICA DIARIA',
+    'eyebrow.sessionComplete': 'SESIÓN COMPLETADA',
+    'eyebrow.rulesRef': 'REFERENCIA · REGLAS DE GÉNERO',
+    'eyebrow.corpus': 'CORPUS · {n} SUSTANTIVOS',
+
+    'home.h1': 'Pule tus casos del alemán.',
+    'home.sub': 'Escribe el artículo y el sustantivo según el caso indicado. {n} sustantivos en el corpus, ponderados por importancia. Los fallos vuelven hasta que los aciertes.',
+    'home.kbdHint': 'Enter para enviar · Esc para omitir',
+    'home.kbdHint.enter': 'para enviar',
+    'home.kbdHint.esc': 'para omitir',
+    'home.lead': 'Practica los casos del alemán. {n} sustantivos cargados.',
+    'home.start': 'Empezar sesión ({n} tarjetas)',
+    'home.starting': 'Empezando…',
+    'home.dataExport': 'Datos / Exportar',
+    'home.stats.sessions': '{n} sesiones',
+    'home.stats.cardsReviewed': '{n} tarjetas repasadas',
+    'home.stats.dueNow': '{n} pendientes ahora',
+    'home.label.sessions': 'sesiones',
+    'home.label.cardsReviewed': 'tarjetas repasadas',
+    'home.label.dueNow': 'pendientes ahora',
+    'home.inProgress': 'En curso',
+    'home.inProgressEmpty': 'Aún nada en curso — empieza una sesión.',
+    'home.recentlyMissed': 'Fallos recientes',
+    'home.recentlyMissedEmpty': 'Sin fallos en los últimos 7 días.',
+    'home.missedCount': '{n}× fallada',
+    'home.sessions': 'Sesiones',
+    'home.noSessions': 'Aún no hay sesiones.',
+    'home.statusCompleted': 'completada',
+    'home.statusInProgress': 'en curso',
+    'home.andMore': '…y {n} más',
+    'home.today': 'Hoy',
+    'home.yesterday': 'Ayer',
+    'home.viewTimeline': 'Ver línea de tiempo →',
+    'home.drillDueNow': 'Practicar pendientes ({n})',
+    'home.settings': 'Ajustes',
+    'home.settings.toggleAria': 'Mostrar/ocultar ajustes',
+    'settings.case': 'Caso',
+    'settings.number': 'Número',
+    'settings.article': 'Artículo',
+    'settings.case.all': 'Todos',
+    'settings.case.nom': 'Nom',
+    'settings.case.acc': 'Acu',
+    'settings.case.dat': 'Dat',
+    'settings.number.both': 'Ambos',
+    'settings.number.sg': 'Sg',
+    'settings.number.pl': 'Pl',
+    'settings.article.both': 'Ambos',
+    'settings.article.def': 'Definido',
+    'settings.article.indef': 'Indefinido',
+    'settings.possessive': 'Posesivo',
+    'settings.poss.off': 'Apagado',
+    'settings.poss.off.title': 'Sin tarjetas de posesivos (mein, dein, …)',
+    'settings.poss.basic2': 'mein/dein',
+    'settings.poss.basic2.title': 'Solo mein (mi) y dein (tu)',
+    'settings.poss.core4': 'Núcleo 4',
+    'settings.poss.core4.title': 'mein, dein, sein, ihr — poseedores en singular',
+    'settings.poss.all7': 'Todos',
+    'settings.poss.all7.title': 'mein, dein, sein, ihr, unser, euer, Ihr',
+
+    'vokabular.eyebrow': 'SCHLEIFER · VOCABULARIO',
+    'vokabular.h1': 'Traduce y elige la coincidencia.',
+    'vokabular.sub': 'Prácticas de traducción con opción múltiple. La dirección cambia en cada pregunta. {n} sustantivos en el corpus.',
+    'vokabular.start': 'Empezar sesión ({n} tarjetas)',
+    'vokabular.starting': 'Empezando…',
+    'vokabular.drillDueNow': 'Practicar pendientes ({n})',
+
+    'session.endSession': 'Terminar sesión',
+    'session.placeholder': 'Escribe el artículo + sustantivo…',
+    'session.submit': 'Enviar',
+    'session.skip': 'Omitir',
+    'session.idk': 'No lo sé',
+    'session.next': 'Siguiente',
+    'session.result.correct': 'Correcto',
+    'session.result.typo': 'Casi — errata, aceptada',
+    'session.result.idk': 'Marcada como desconocida',
+    'session.result.incorrect': 'Incorrecto',
+    'session.result.articleMismatch': 'Forma correcta — artículo equivocado',
+    'session.articleMismatch.usedDef':
+      'Has respondido con el artículo definido (der/die/das…). Esta tarjeta pedía el indefinido (ein…).',
+    'session.articleMismatch.usedIndef':
+      'Has respondido con el artículo indefinido (ein…). Esta tarjeta pedía el definido (der/die/das…).',
+    'session.youWrote': 'Has escrito',
+    'session.youWroteShort': 'escribiste',
+    'session.expectedShort': 'esperado',
+    'session.answer': 'Respuesta:',
+    'session.nominativ': 'Nominativ:',
+    'session.translation': 'Traducción:',
+    'a11y.listen': 'Escuchar',
+    'session.rule': 'Regla {n}:',
+    'session.notFound': 'Sesión no encontrada.',
+    'session.loading': 'Cargando…',
+    'session.summaryTitle': 'Sesión completada',
+    'session.summaryH1': 'Buen trabajo.',
+    'session.kbdSubmit': 'enviar',
+    'session.kbdSkip': 'omitir',
+    'session.stats.correct': '{n} correctas',
+    'session.stats.wrong': '{n} incorrectas',
+    'session.stats.unknown': '{n} desconocidas',
+    'session.stats.skipped': '{n} omitidas',
+    'session.correctHeading': 'Correctas ({n})',
+    'session.missedHeading': 'Falladas ({n})',
+    'session.didntKnow': 'no la sabías — respuesta: {x}',
+    'session.wroteVsExpected': 'escribiste {x} · esperado {y}',
+    'session.typoLabel': 'errata: {x}',
+    'session.backToHome': 'Volver al inicio',
+
+    'vokabular.prompt.de': '¿Qué significa esto?',
+    'vokabular.prompt.en': '¿Qué sustantivo alemán encaja?',
+    'vokabular.answerLabel': 'Respuesta',
+    'vokabular.result.correct': 'Correcto',
+    'vokabular.result.incorrect': 'Incorrecto',
+    'vokabular.summaryH1': 'Buen trabajo.',
+    'vokabular.pickedShort': 'elegiste',
+    'vokabular.correctShort': 'correcto',
+
+    'data.title': 'Datos',
+    'data.lead':
+      'Todo tu progreso vive en este navegador. Expórtalo a un archivo para hacer copia o cambiar de dispositivo.',
+    'data.counts.nouns': '{n} sustantivos en el catálogo',
+    'data.counts.cards': '{n} tarjetas generadas',
+    'data.counts.cardStates': '{n} tarjetas repasadas',
+    'data.counts.sessions': '{n} sesiones',
+    'data.counts.events': '{n} eventos de actividad',
+    'data.exportBtn': 'Exportar JSON',
+    'data.importBtn': 'Importar JSON…',
+    'data.wipeBtn': 'Borrar progreso',
+    'data.exportedMsg': 'Exportado.',
+    'data.importedMsg':
+      'Importado: {a} estados de tarjeta, {b} sesiones, {c} eventos.',
+    'data.importFailed': 'Importación fallida: {msg}',
+    'data.importConfirm':
+      'Al importar se REEMPLAZARÁ todo el progreso actual (estados de tarjeta, sesiones, eventos). ¿Continuar?',
+    'data.wipeConfirm':
+      '¿Borrar permanentemente todo el progreso, las sesiones y los eventos? El catálogo de sustantivos se conserva.',
+    'data.wipedMsg': 'Progreso borrado.',
+    'data.backLink': '← Volver al inicio',
+
+    'rules.title': 'Reglas de género',
+    'rules.lead':
+      'Patrones comunes para predecir el género de un sustantivo alemán. Son heurísticos, no leyes absolutas — hay excepciones.',
+    'rules.rule': 'Regla {n}',
+    'rules.expectedGender': 'Género esperado:',
+    'rules.fromCatalog': 'Del catálogo ({n})',
+    'rules.andMore': '…y {n} más',
+    'rules.tablesHeading': 'Tablas de artículos y casos',
+    'rules.genderHeading': 'Heurísticas de género',
+    'rules.moreTables': 'Más tablas y referencias',
+    'rules.genderHeuristics': 'Heurísticas de género ({n})',
+    'tabs.cases': 'Casos',
+    'tabs.articles': 'Artículos',
+    'tabs.adjectives': 'Adjetivos',
+    'tabs.plurals': 'Plurales',
+    'tabs.gender': 'Reglas de género',
+
+    'gender.feminine': 'femenino',
+    'gender.masculine': 'masculino',
+    'gender.neuter': 'neutro',
+    'gender.varies': 'varía',
   },
 };
 
@@ -405,6 +636,64 @@ const RULE_FEEDBACK_DE: Record<number, string> = {
   99: 'Dieses Nomen passt zu keiner starken allgemeinen Regel. Mit dem Artikel zusammen lernen.',
 };
 
+const RULE_TITLES_ES: Record<number, string> = {
+  1: 'Los sustantivos en -ung suelen ser femeninos',
+  2: 'Los sustantivos en -heit o -keit suelen ser femeninos',
+  3: 'Los sustantivos en -schaft suelen ser femeninos',
+  4: 'Los sustantivos en -tion, -sion o -ion suelen ser femeninos',
+  5: 'Los diminutivos en -chen o -lein son neutros',
+  6: 'Los sustantivos en -ment suelen ser neutros',
+  7: 'Los sustantivos en -um suelen ser neutros',
+  8: 'Los sustantivos en -ismus suelen ser masculinos',
+  9: 'Muchos nombres de persona o profesión en -er son masculinos',
+  10: 'Días, meses y estaciones son masculinos',
+  11: 'Muchos árboles, flores y plantas son femeninos',
+  12: 'Las personas y animales jóvenes suelen ser neutros',
+  13: 'Los metales y elementos químicos suelen ser neutros',
+  14: 'Los infinitivos sustantivados son neutros',
+  15: 'Los compuestos heredan el género del último sustantivo',
+  16: 'Los sustantivos en -ik suelen ser femeninos',
+  17: 'Los sustantivos en -ei suelen ser femeninos',
+  18: 'Los nombres cortos y concretos de objetos suelen ser masculinos',
+  19: 'Los nombres femeninos de persona o animal en -in son femeninos',
+  20: 'Los sustantivos en -or suelen ser masculinos',
+  21: 'Los sustantivos en -ling suelen ser masculinos',
+  22: 'Los sustantivos en -tät son femeninos',
+  23: 'Los sustantivos en -enz o -anz suelen ser femeninos',
+  24: 'Los sustantivos en -age o -ur suelen ser femeninos',
+  25: 'Los sustantivos en -nis suelen ser neutros, a veces femeninos',
+  99: 'Sin regla fiable; memorízalo junto con su artículo',
+};
+
+const RULE_FEEDBACK_ES: Record<number, string> = {
+  1: 'Las palabras en -ung suelen ser femeninas, así que normalmente toman „die".',
+  2: 'Las palabras en -heit o -keit suelen ser femeninas, así que normalmente toman „die".',
+  3: 'Las palabras en -schaft suelen ser femeninas, así que normalmente toman „die".',
+  4: 'Muchas palabras cultas o de origen latino en -tion, -sion o -ion son femeninas.',
+  5: 'Los diminutivos alemanes en -chen o -lein son siempre neutros, incluso si la persona o el animal es femenino.',
+  6: 'Muchos sustantivos en -ment son neutros, así que suelen tomar „das".',
+  7: 'Muchos sustantivos en -um son neutros, especialmente las palabras cultas o latinas.',
+  8: 'Los nombres de ideologías o sistemas en -ismus suelen ser masculinos.',
+  9: 'Muchos nombres de persona o profesión en -er son masculinos.',
+  10: 'Los días, meses y estaciones del año en alemán suelen ser masculinos.',
+  11: 'Muchos nombres de árboles, flores y plantas son femeninos en alemán.',
+  12: 'Las palabras para personas o animales jóvenes suelen ser neutras.',
+  13: 'Los metales y muchos elementos químicos suelen ser neutros.',
+  14: 'Cuando un infinitivo se usa como sustantivo, es neutro.',
+  15: 'En los compuestos, el último elemento determina el género.',
+  16: 'Muchos sustantivos en -ik, sobre todo disciplinas o sistemas, son femeninos.',
+  17: 'Muchos sustantivos en -ei son femeninos, especialmente comercios, lugares o procesos.',
+  18: 'Muchos nombres cortos y concretos de objetos son masculinos, pero es solo una regla aproximada.',
+  19: 'Los nombres femeninos de persona o animal en -in son femeninos.',
+  20: 'Muchos sustantivos en -or son masculinos, especialmente roles, aparatos y tecnicismos.',
+  21: 'Los sustantivos en -ling suelen ser masculinos.',
+  22: 'Los sustantivos abstractos en -tät son femeninos.',
+  23: 'Los sustantivos abstractos en -enz o -anz suelen ser femeninos.',
+  24: 'Muchos préstamos en -age o -ur son femeninos.',
+  25: 'Muchos sustantivos en -nis son neutros, pero algunos comunes son femeninos — observa el artículo.',
+  99: 'Este sustantivo no encaja en ninguna regla general fuerte. Apréndelo junto con su artículo.',
+};
+
 @Injectable({ providedIn: 'root' })
 export class I18nService {
   readonly lang = signal<Lang>(this.loadLang());
@@ -415,7 +704,10 @@ export class I18nService {
   }
 
   toggle() {
-    this.setLang(this.lang() === 'de' ? 'en' : 'de');
+    const cur = this.lang();
+    const i = LANGS.indexOf(cur);
+    const next = LANGS[(i + 1) % LANGS.length];
+    this.setLang(next);
   }
 
   /** Translate a key, with optional {placeholder} substitution. */
@@ -433,12 +725,14 @@ export class I18nService {
   /** Localized rule title for the current language. */
   ruleTitle(id: number, fallback: string): string {
     if (this.lang() === 'de') return RULE_TITLES_DE[id] ?? fallback;
+    if (this.lang() === 'es') return RULE_TITLES_ES[id] ?? fallback;
     return fallback;
   }
 
   /** Localized rule feedback message for the current language. */
   ruleFeedback(id: number, fallback: string): string {
     if (this.lang() === 'de') return RULE_FEEDBACK_DE[id] ?? fallback;
+    if (this.lang() === 'es') return RULE_FEEDBACK_ES[id] ?? fallback;
     return fallback;
   }
 
@@ -466,7 +760,7 @@ export class I18nService {
     const diffMs = ts - now;
     const absMs = Math.abs(diffMs);
     if (absMs < 60_000) return this.t('progress.now');
-    const locale = this.lang() === 'de' ? 'de-DE' : 'en-US';
+    const locale = LOCALE_BY_LANG[this.lang()];
     const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
     const minutes = Math.round(diffMs / 60_000);
     const hours = Math.round(diffMs / 3_600_000);
@@ -479,7 +773,7 @@ export class I18nService {
   private loadLang(): Lang {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored === 'en' || stored === 'de') return stored;
+      if (stored === 'en' || stored === 'de' || stored === 'es') return stored;
     } catch {}
     return 'de';
   }

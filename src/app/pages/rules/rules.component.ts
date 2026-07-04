@@ -38,6 +38,7 @@ const TABS: Tab[] = [
       'definite-articles',
       'indefinite-articles',
       'negative-indefinite-article',
+      'possessive-articles',
       'teaching-tip',
     ],
   },
