@@ -69,6 +69,35 @@ type Panel = 'account' | 'nouns' | 'data';
           </button>
           <button class="btn btn--ghost" (click)="signOut()">{{ i18n.t('account.signOut') }}</button>
         </div>
+
+        <div class="change-pw">
+          @if (!showChangePw()) {
+            <button class="linkish" (click)="openChangePw()">
+              {{ i18n.t('account.changePassword') }}
+            </button>
+          } @else {
+            <form class="auth-form" (ngSubmit)="doUpdatePassword()">
+              <label class="field">
+                <span class="field__k">{{ i18n.t('account.newPassword') }}</span>
+                <input
+                  class="ti"
+                  type="password"
+                  name="cp"
+                  [(ngModel)]="password"
+                  autocomplete="new-password"
+                />
+              </label>
+              <div class="cta-row">
+                <button type="submit" class="btn btn--primary" [disabled]="busy()">
+                  {{ i18n.t('account.updatePassword') }}
+                </button>
+                <button type="button" class="btn btn--ghost" (click)="cancelChangePw()">
+                  {{ i18n.t('account.cancel') }}
+                </button>
+              </div>
+            </form>
+          }
+        </div>
       } @else if (mode() === 'recovery') {
         <!-- New-password form after a reset-email landing -->
         <h1>{{ i18n.t('account.recoveryTitle') }}</h1>
@@ -138,7 +167,10 @@ type Panel = 'account' | 'nouns' | 'data';
   styles: [
     `
       .acct-tabs {
-        display: inline-flex;
+        /* Block-level (so the eyebrow/heading below starts on its own line)
+           but shrink-wrapped to the pills. */
+        display: flex;
+        width: fit-content;
         border: 1px solid var(--rule);
         background: var(--bg);
         margin-bottom: 28px;
@@ -221,6 +253,12 @@ type Panel = 'account' | 'nouns' | 'data';
       }
       .sync-box__v { font: 500 13px/1 var(--font-mono); color: var(--ink); }
       .sync-box__v.is-err { color: var(--bad); }
+      .change-pw {
+        margin-top: 22px;
+        padding-top: 18px;
+        border-top: 1px solid var(--rule);
+      }
+      .change-pw .auth-form { margin-top: 0; }
     `,
   ],
 })
@@ -235,6 +273,7 @@ export class AccountComponent {
   message = signal('');
   isError = signal(false);
   busy = signal(false);
+  readonly showChangePw = signal(false);
 
   readonly panel = signal<Panel>('account');
   // A password-reset landing must force the account panel (recovery form).
@@ -317,6 +356,20 @@ export class AccountComponent {
     }
   }
 
+  // Reveal / dismiss the signed-in "change password" form.
+  openChangePw() {
+    this.password = '';
+    this.message.set('');
+    this.isError.set(false);
+    this.showChangePw.set(true);
+  }
+  cancelChangePw() {
+    this.password = '';
+    this.showChangePw.set(false);
+  }
+
+  // Shared by the reset-recovery form and the signed-in change-password form:
+  // both set a new password on the current (recovery or normal) session.
   async doUpdatePassword() {
     if (!this.password) {
       this.fail(this.i18n.t('account.validation.required'));
@@ -327,6 +380,7 @@ export class AccountComponent {
       const { error } = await this.auth.updatePassword(this.password);
       if (error) return this.fail(error.message);
       this.password = '';
+      this.showChangePw.set(false);
       this.ok('account.passwordUpdated');
     } finally {
       this.busy.set(false);
