@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { CatalogService } from '../../core/catalog.service';
 import { DbService } from '../../core/db.service';
 import { I18nService } from '../../core/i18n.service';
@@ -8,9 +8,9 @@ import { TransferService } from '../../core/transfer.service';
 @Component({
   selector: 'app-data',
   standalone: true,
-  imports: [RouterLink],
+  imports: [],
   template: `
-    <main class="page page--narrow">
+    <section class="page page--narrow">
       <span class="eyebrow">
         {{ i18n.t('eyebrow.corpus', { n: catalog.allNouns().length }) }}
       </span>
@@ -62,10 +62,7 @@ import { TransferService } from '../../core/transfer.service';
         </p>
       }
 
-      <p style="margin-top: 24px;">
-        <a routerLink="/" style="cursor:pointer;">{{ i18n.t('data.backLink') }}</a>
-      </p>
-    </main>
+    </section>
   `,
   styles: [],
 })

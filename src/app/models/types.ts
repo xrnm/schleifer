@@ -39,6 +39,11 @@ export interface TranslationQuestion {
   answerIndex: number;
 }
 
+// Distinguishes shipped corpus nouns from ones the user added. Set in memory
+// when the catalog loads; user nouns also persist it in the `userNouns` store,
+// which is the boundary the cloud-sync layer reads/writes.
+export type NounSource = 'builtin' | 'user';
+
 export interface Noun {
   id: string;
   singular: string;
@@ -49,6 +54,21 @@ export interface Noun {
   english: string;
   ruleIds?: number[];
   primaryRuleId?: number;
+  source?: NounSource;
+  // Epoch-ms of the last local edit for user nouns; last-write-wins key when
+  // custom nouns sync. Unset for builtin corpus nouns.
+  updatedAt?: number;
+}
+
+// Fields the "My Nouns" add/edit form collects. `id`/`source` are assigned by
+// CatalogService, and cards are generated from this — no ruleIds for user nouns.
+export interface UserNounInput {
+  singular: string;
+  plural: string | null;
+  pluralOnly: boolean;
+  gender: Gender;
+  english: string;
+  importance: number;
 }
 
 export interface Rule {
@@ -84,6 +104,10 @@ export interface CardState {
   lapses: number;
   lastShownAt: number | null;
   lastResult: AnswerResult | null;
+  // Epoch-ms of the last local write. Stamped by DbService on every put and
+  // used as the last-write-wins key by the cloud-sync layer. Optional so
+  // existing construction sites need not set it; the DB backfills old rows.
+  updatedAt?: number;
 }
 
 export interface Session {
@@ -96,6 +120,8 @@ export interface Session {
   incorrect: number;
   idk: number;
   skipped: number;
+  // See CardState.updatedAt — last-write-wins key for cloud sync.
+  updatedAt?: number;
 }
 
 export interface AnswerPrompt {
@@ -130,11 +156,19 @@ export type ActivityEvent =
   | { kind: 'import'; ts: number; counts: Record<string, number> }
   | { kind: 'export'; ts: number; counts: Record<string, number> };
 
+// An ActivityEvent as persisted: the payload plus a client-generated stable id
+// (uuid) so events dedupe across devices when synced. Replaces the old
+// IndexedDB auto-increment numeric id.
+export type StoredEvent = ActivityEvent & { id: string };
+
 export interface ExportFile {
-  schema: 'schleifer.v1';
+  // v2 carries userNouns and stable string event ids. v1 files (numeric/no
+  // event ids, no userNouns) are still accepted on import for back-compat.
+  schema: 'schleifer.v1' | 'schleifer.v2';
   exportedAt: number;
   catalogVersion: string;
   cardStates: CardState[];
   sessions: Session[];
-  events: (ActivityEvent & { id?: number })[];
+  events: (ActivityEvent & { id?: string | number })[];
+  userNouns?: Noun[];
 }

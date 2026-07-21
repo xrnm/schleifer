@@ -6,7 +6,7 @@ import { DbService } from './db.service';
 export class ActivityService {
   private db = inject(DbService);
 
-  log(event: ActivityEvent): Promise<void> {
-    return this.db.addEvent(event);
+  async log(event: ActivityEvent): Promise<void> {
+    await this.db.addEvent(event);
   }
 }

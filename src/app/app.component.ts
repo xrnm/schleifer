@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { AuthService } from './core/auth.service';
 import { I18nService, LANGS, Lang } from './core/i18n.service';
 
 @Component({
@@ -24,8 +25,29 @@ import { I18nService, LANGS, Lang } from './core/i18n.service';
           <a routerLink="/rules" routerLinkActive="is-active">
             <span class="nav__label">{{ i18n.t('nav.rules') }}</span>
           </a>
-          <a routerLink="/data" routerLinkActive="is-active">
-            <span class="nav__label">{{ i18n.t('nav.data') }}</span>
+          <a
+            routerLink="/account"
+            routerLinkActive="is-active"
+            class="nav__account"
+            [class.is-signed-in]="auth.status() === 'signedIn'"
+          >
+            <svg
+              class="nav__usericon"
+              viewBox="0 0 24 24"
+              width="14"
+              height="14"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linecap="square"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="8" r="3.4" />
+              <path d="M5.5 19.2c0-3.5 2.9-5.8 6.5-5.8s6.5 2.3 6.5 5.8" />
+            </svg>
+            <span class="nav__label">{{
+              auth.status() === 'signedIn' ? i18n.t('nav.account') : i18n.t('nav.signIn')
+            }}</span>
           </a>
 
           <div class="lang-picker" role="group" [attr.aria-label]="langAriaLabel">
@@ -154,6 +176,19 @@ import { I18nService, LANGS, Lang } from './core/i18n.service';
       nav.nav a.is-active .nav__label::before { content: '[ '; }
       nav.nav a.is-active .nav__label::after  { content: ' ]'; }
 
+      .nav__account { display: inline-flex; align-items: center; gap: 6px; }
+      .nav__usericon {
+        flex: 0 0 auto;
+        display: block;
+        color: var(--ink-3);
+        transition: color var(--dur-fast) var(--ease-standard);
+      }
+      .nav__account:hover .nav__usericon { color: var(--ink); }
+      .nav__account.is-active .nav__usericon { color: var(--orange); }
+      /* Signed-in: the glyph carries the accent so state reads at a glance. */
+      .nav__account.is-signed-in .nav__usericon { color: var(--das); }
+      .nav__account.is-signed-in.is-active .nav__usericon { color: var(--orange); }
+
       .lang-picker {
         display: inline-flex;
         align-items: stretch;
@@ -207,6 +242,7 @@ import { I18nService, LANGS, Lang } from './core/i18n.service';
 })
 export class AppComponent {
   i18n = inject(I18nService);
+  auth = inject(AuthService);
   readonly langs: Lang[] = LANGS;
 
   get langAriaLabel(): string {

@@ -34,12 +34,29 @@
                 { "type": "initial", "maximumWarning": "1MB", "maximumError": "2MB" },
                 { "type": "anyComponentStyle", "maximumWarning": "8kB", "maximumError": "16kB" }
               ],
-              "outputHashing": "all"
+              "outputHashing": "all",
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.prod.ts"
+                }
+              ]
             },
             "development": {
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
+            },
+            "local": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.local.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "development"
@@ -48,7 +65,8 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": { "buildTarget": "schleifer:build:production" },
-            "development": { "buildTarget": "schleifer:build:development" }
+            "development": { "buildTarget": "schleifer:build:development" },
+            "local": { "buildTarget": "schleifer:build:local" }
           },
           "defaultConfiguration": "development"
         },
