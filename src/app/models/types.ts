@@ -15,18 +15,30 @@ export type PossessiveStem =
   | 'euer'
   | 'Ihr';
 
+// Adjective-declension class. `weak` = after a definite article (der/die/das),
+// `mixed` = after an ein-word (ein/kein/mein), `strong` = no determiner. The
+// adjective ending is a pure function of class × gender × number × case.
+export type AdjClass = 'weak' | 'mixed' | 'strong';
+
 export type CaseFilter = 'all' | CaseT;
 export type NumberFilter = 'both' | NumberT;
 // Article filter governs the def/indef axis only. Possessives are gated by
 // `possessiveScope` so the user can opt them in/out without touching def/indef.
 export type ArticleFilter = 'both' | 'def' | 'indef';
 export type PossessiveScope = 'off' | 'basic2' | 'core4' | 'all7';
+// Adjective area's declension-class filter. Independent of the Deklination
+// area's article filter so the two drawers never couple.
+export type AdjClassFilter = 'all' | AdjClass;
 
 export interface AppSettings {
   caseFilter: CaseFilter;
   numberFilter: NumberFilter;
   articleFilter: ArticleFilter;
   possessiveScope: PossessiveScope;
+  // Adjective-area filters (Fall · Numerus · Deklinationstyp).
+  adjCaseFilter: CaseFilter;
+  adjNumberFilter: NumberFilter;
+  adjClassFilter: AdjClassFilter;
 }
 
 export type TranslationDirection = 'de->en' | 'en->de';
@@ -84,6 +96,26 @@ export interface NounCatalog {
   rules: Rule[];
 }
 
+// One drillable adjective. `base` is the dictionary/predicative form shown as
+// the cue; `stem` is the declension stem, present only when it differs from
+// `base` (teuer→teur, hoch→hoh, dunkel→dunkl, müde→müd). `nounIds` are corpus
+// noun ids this adjective plausibly pairs with, curated to span all genders so
+// every ending cell can render. en/de/es are glosses.
+export interface AdjectiveEntry {
+  id: string;
+  base: string;
+  stem?: string;
+  en: string;
+  de: string;
+  es: string;
+  nounIds: string[];
+}
+
+export interface AdjectiveCatalog {
+  version: string;
+  adjectives: AdjectiveEntry[];
+}
+
 export interface Card {
   id: string;
   nounId: string;
@@ -132,6 +164,10 @@ export interface AnswerPrompt {
   number: NumberT;
   articleType: ArticleT;
   possessive?: PossessiveStem;
+  // Set only for adjective-area answers: the declension class and the
+  // adjective's dictionary form. `articleType` carries a harmless filler there.
+  cls?: AdjClass;
+  adjective?: string;
 }
 
 export type ActivityEvent =

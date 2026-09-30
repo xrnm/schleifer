@@ -1,5 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import {
+  AdjClassFilter,
   AppSettings,
   ArticleFilter,
   CaseFilter,
@@ -14,6 +15,9 @@ const DEFAULTS: AppSettings = {
   numberFilter: 'both',
   articleFilter: 'both',
   possessiveScope: 'off',
+  adjCaseFilter: 'all',
+  adjNumberFilter: 'both',
+  adjClassFilter: 'all',
 };
 
 @Injectable({ providedIn: 'root' })
@@ -40,6 +44,21 @@ export class SettingsService {
     this.persist();
   }
 
+  setAdjCaseFilter(v: CaseFilter) {
+    this.settings.update((s) => ({ ...s, adjCaseFilter: v }));
+    this.persist();
+  }
+
+  setAdjNumberFilter(v: NumberFilter) {
+    this.settings.update((s) => ({ ...s, adjNumberFilter: v }));
+    this.persist();
+  }
+
+  setAdjClassFilter(v: AdjClassFilter) {
+    this.settings.update((s) => ({ ...s, adjClassFilter: v }));
+    this.persist();
+  }
+
   private persist() {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(this.settings())); } catch {}
   }
@@ -56,11 +75,24 @@ export class SettingsService {
         possessiveScope: isPossessiveScope(parsed.possessiveScope)
           ? parsed.possessiveScope
           : DEFAULTS.possessiveScope,
+        adjCaseFilter: isCaseFilter(parsed.adjCaseFilter)
+          ? parsed.adjCaseFilter
+          : DEFAULTS.adjCaseFilter,
+        adjNumberFilter: isNumberFilter(parsed.adjNumberFilter)
+          ? parsed.adjNumberFilter
+          : DEFAULTS.adjNumberFilter,
+        adjClassFilter: isAdjClassFilter(parsed.adjClassFilter)
+          ? parsed.adjClassFilter
+          : DEFAULTS.adjClassFilter,
       };
     } catch {
       return { ...DEFAULTS };
     }
   }
+}
+
+function isAdjClassFilter(v: unknown): v is AdjClassFilter {
+  return v === 'all' || v === 'weak' || v === 'mixed' || v === 'strong';
 }
 
 function isCaseFilter(v: unknown): v is CaseFilter {

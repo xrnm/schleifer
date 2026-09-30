@@ -1,7 +1,15 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { Card, Noun, NounCatalog, Rule, UserNounInput } from '../models/types';
+import {
+  AdjectiveCatalog,
+  AdjectiveEntry,
+  Card,
+  Noun,
+  NounCatalog,
+  Rule,
+  UserNounInput,
+} from '../models/types';
 import { generateAllCards, generateCardsForNoun } from './declension';
 import { DbService } from './db.service';
 import { translationCardId } from './translation';
@@ -14,6 +22,7 @@ export class CatalogService {
   private nouns: Noun[] = [];
   private cards: Card[] = [];
   private rules: Rule[] = [];
+  private adjectives: AdjectiveEntry[] = [];
   private nounById = new Map<string, Noun>();
   private cardById = new Map<string, Card>();
   private ruleById = new Map<number, Rule>();
@@ -28,9 +37,13 @@ export class CatalogService {
   }
 
   private async load(): Promise<void> {
-    const file = await firstValueFrom(
-      this.http.get<NounCatalog>('assets/nouns.json'),
-    );
+    const [file, adjFile] = await Promise.all([
+      firstValueFrom(this.http.get<NounCatalog>('assets/nouns.json')),
+      firstValueFrom(this.http.get<AdjectiveCatalog>('assets/adjectives.json')),
+    ]);
+    // Adjectives are small, rule-derived and shipped with the bundle — kept in
+    // memory only, like rules. Their SRS lives in the shared cardStates store.
+    this.adjectives = adjFile.adjectives ?? [];
     const storedVersion = await this.db.getMeta<string>('catalogVersion');
 
     // Rules live only in memory — they're small and shipped with the bundle.
@@ -208,6 +221,9 @@ export class CatalogService {
   allNouns(): Noun[] { return this.nouns; }
   allCards(): Card[] { return this.cards; }
   allRules(): Rule[] { return this.rules; }
+  allAdjectives(): AdjectiveEntry[] { return this.adjectives; }
+  /** Lookup map used by the adjective surface picker. */
+  nounMap(): Map<string, Noun> { return this.nounById; }
   noun(id: string): Noun | undefined { return this.nounById.get(id); }
   card(id: string): Card | undefined { return this.cardById.get(id); }
   rule(id: number): Rule | undefined { return this.ruleById.get(id); }

@@ -29,6 +29,20 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'adjektiv',
+    loadComponent: () =>
+      import('./pages/adjektiv-home/adjektiv-home.component').then(
+        (m) => m.AdjektivHomeComponent,
+      ),
+  },
+  {
+    path: 'adjektiv/session/:id',
+    loadComponent: () =>
+      import('./pages/adjektiv-session/adjektiv-session.component').then(
+        (m) => m.AdjektivSessionComponent,
+      ),
+  },
+  {
     path: 'progress',
     loadComponent: () =>
       import('./pages/progress/progress.component').then((m) => m.ProgressComponent),

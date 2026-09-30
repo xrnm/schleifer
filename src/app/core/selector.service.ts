@@ -11,13 +11,14 @@ import { CatalogService } from './catalog.service';
 import { DbService } from './db.service';
 import { SettingsService } from './settings.service';
 import { isTranslationCardId, translationCardId } from './translation';
+import { AdjCell, adjCellId, allAdjCells, isAdjectiveCardId } from './adjective';
 
 const RECENT_FAIL_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 const REVIEW_CAP = 35;
 const RECENT_FAIL_CAP = 10;
 const MAX_PER_NOUN = 2;
 
-export type PracticeArea = 'deklination' | 'vokabular';
+export type PracticeArea = 'deklination' | 'vokabular' | 'adjektiv';
 
 /**
  * Translation IDs are flat — one per noun. Used to mock a "card list" for the
@@ -205,6 +206,78 @@ export class SelectorService {
   }
 
   /**
+   * Returns the adjective ending-cell ids to present this session, ordered
+   * review → recent-fail → new. The universe is the 36 cells (filtered by the
+   * adjective drawer); each cell is one SRS card in the shared cardStates
+   * store. The surface (which adjective/noun) is chosen at render time.
+   */
+  async pickAdjektivSession(
+    targetCount: number,
+    filters: AppSettings,
+    now = Date.now(),
+  ): Promise<string[]> {
+    const states = await this.db.getAllCardStates();
+    const ids = allowedAdjCellIds(filters);
+    const stateById = new Map(
+      states.filter((s) => isAdjectiveCardId(s.cardId)).map((s) => [s.cardId, s]),
+    );
+
+    const reviewQueue: { id: string; state: CardState }[] = [];
+    const recentFailQueue: { id: string; state: CardState }[] = [];
+    const seen = new Set<string>();
+
+    for (const id of ids) {
+      const s = stateById.get(id);
+      if (!s) continue;
+      seen.add(id);
+      if (s.lastResult !== null && s.due <= now) {
+        reviewQueue.push({ id, state: s });
+      } else if (
+        (s.lastResult === 'incorrect' || s.lastResult === 'idk') &&
+        s.lastShownAt !== null &&
+        now - s.lastShownAt <= RECENT_FAIL_WINDOW_MS
+      ) {
+        recentFailQueue.push({ id, state: s });
+      }
+    }
+    reviewQueue.sort((a, b) => a.state.due - b.state.due);
+    recentFailQueue.sort(
+      (a, b) => (b.state.lastShownAt ?? 0) - (a.state.lastShownAt ?? 0),
+    );
+
+    const picked: string[] = [];
+    const pushed = new Set<string>();
+    const push = (id: string) => {
+      if (pushed.has(id)) return;
+      picked.push(id);
+      pushed.add(id);
+    };
+
+    for (const { id } of reviewQueue) {
+      if (picked.length >= targetCount || picked.length >= REVIEW_CAP) break;
+      push(id);
+    }
+    const reviewSlot = picked.length;
+    for (const { id } of recentFailQueue) {
+      if (picked.length >= targetCount) break;
+      if (picked.length - reviewSlot >= RECENT_FAIL_CAP) break;
+      push(id);
+    }
+    if (picked.length < targetCount) {
+      const fresh = ids.filter((id) => !seen.has(id));
+      for (let i = fresh.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [fresh[i], fresh[j]] = [fresh[j], fresh[i]];
+      }
+      for (const id of fresh) {
+        if (picked.length >= targetCount) break;
+        push(id);
+      }
+    }
+    return picked;
+  }
+
+  /**
    * Number of cards currently due for an area, given the current filters
    * (filters only apply to declension). "Due" matches the same condition
    * pickSession() uses: a card with a recorded result whose `due` has passed.
@@ -214,6 +287,12 @@ export class SelectorService {
     if (area === 'vokabular') {
       return states.filter(
         (s) => isTranslationCardId(s.cardId) && s.lastResult !== null && s.due <= now,
+      ).length;
+    }
+    if (area === 'adjektiv') {
+      const allowed = new Set(allowedAdjCellIds(this.settings.settings()));
+      return states.filter(
+        (s) => allowed.has(s.cardId) && s.lastResult !== null && s.due <= now,
       ).length;
     }
     const filters = this.settings.settings();
@@ -239,6 +318,13 @@ export class SelectorService {
         .sort((a, b) => a.due - b.due)
         .map((s) => s.cardId);
     }
+    if (area === 'adjektiv') {
+      const allowed = new Set(allowedAdjCellIds(this.settings.settings()));
+      return states
+        .filter((s) => allowed.has(s.cardId) && s.lastResult !== null && s.due <= now)
+        .sort((a, b) => a.due - b.due)
+        .map((s) => s.cardId);
+    }
     const filters = this.settings.settings();
     const cardById = new Map(this.catalog.allCards().map((c) => [c.id, c]));
     return states
@@ -250,6 +336,21 @@ export class SelectorService {
       .sort((a, b) => a.due - b.due)
       .map((s) => s.cardId);
   }
+}
+
+function matchesAdjFilters(cell: AdjCell, f: AppSettings): boolean {
+  if (f.adjCaseFilter !== 'all' && cell.case !== f.adjCaseFilter) return false;
+  if (f.adjNumberFilter !== 'both' && cell.number !== f.adjNumberFilter) return false;
+  if (f.adjClassFilter !== 'all' && cell.cls !== f.adjClassFilter) return false;
+  return true;
+}
+
+/** The adjective ending-cell ids allowed by the current drawer filters. One
+ *  source of truth for session selection and the due-count/-ids queries. */
+function allowedAdjCellIds(f: AppSettings): string[] {
+  return allAdjCells()
+    .filter((c) => matchesAdjFilters(c, f))
+    .map((c) => adjCellId(c));
 }
 
 function matchesFilters(card: Card, f: AppSettings): boolean {

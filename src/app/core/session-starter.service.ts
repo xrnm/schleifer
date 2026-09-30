@@ -42,7 +42,12 @@ export class SessionStarterService {
     });
     await this.db.setMeta(`session:${id}:cards`, cardIds);
     await this.db.setMeta(`session:${id}:area`, area);
-    const path = area === 'vokabular' ? ['/vokabular', 'session', id] : ['/session', id];
+    const path =
+      area === 'vokabular'
+        ? ['/vokabular', 'session', id]
+        : area === 'adjektiv'
+          ? ['/adjektiv', 'session', id]
+          : ['/session', id];
     await this.router.navigate(path);
     return id;
   }

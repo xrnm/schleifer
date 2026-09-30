@@ -1,0 +1,858 @@
+{
+  "version": "v1",
+  "adjectives": [
+    {
+      "id": "gut",
+      "base": "gut",
+      "en": "good",
+      "de": "gut",
+      "es": "bueno",
+      "nounIds": [
+        "wein",
+        "kaffee",
+        "freund",
+        "frau",
+        "idee",
+        "buch",
+        "essen",
+        "kind"
+      ]
+    },
+    {
+      "id": "neu",
+      "base": "neu",
+      "en": "new",
+      "de": "neu",
+      "es": "nuevo",
+      "nounIds": [
+        "schuh",
+        "computer",
+        "auto",
+        "haus",
+        "handy",
+        "wohnung",
+        "idee",
+        "buch"
+      ]
+    },
+    {
+      "id": "alt",
+      "base": "alt",
+      "en": "old",
+      "de": "alt",
+      "es": "viejo",
+      "nounIds": [
+        "mann",
+        "baum",
+        "freund",
+        "stadt",
+        "uhr",
+        "auto",
+        "haus",
+        "buch"
+      ]
+    },
+    {
+      "id": "gross",
+      "base": "groß",
+      "en": "big",
+      "de": "groß",
+      "es": "grande",
+      "nounIds": [
+        "hund",
+        "berg",
+        "garten",
+        "stadt",
+        "hand",
+        "haus",
+        "fenster",
+        "auge"
+      ]
+    },
+    {
+      "id": "klein",
+      "base": "klein",
+      "en": "small",
+      "de": "klein",
+      "es": "pequeño",
+      "nounIds": [
+        "hund",
+        "tisch",
+        "katze",
+        "blume",
+        "stadt",
+        "kind",
+        "zimmer",
+        "fenster"
+      ]
+    },
+    {
+      "id": "jung",
+      "base": "jung",
+      "en": "young",
+      "de": "jung",
+      "es": "joven",
+      "nounIds": [
+        "mann",
+        "lehrer",
+        "vogel",
+        "frau",
+        "katze",
+        "kind",
+        "maedchen",
+        "pferd"
+      ]
+    },
+    {
+      "id": "schoen",
+      "base": "schön",
+      "en": "beautiful",
+      "de": "schön",
+      "es": "hermoso",
+      "nounIds": [
+        "garten",
+        "tag",
+        "blume",
+        "frau",
+        "stimme",
+        "bild",
+        "kleid",
+        "haus"
+      ]
+    },
+    {
+      "id": "warm",
+      "base": "warm",
+      "en": "warm",
+      "de": "warm",
+      "es": "cálido",
+      "nounIds": [
+        "kaffee",
+        "mantel",
+        "wind",
+        "milch",
+        "jacke",
+        "wasser",
+        "bett",
+        "essen"
+      ]
+    },
+    {
+      "id": "kalt",
+      "base": "kalt",
+      "en": "cold",
+      "de": "kalt",
+      "es": "frío",
+      "nounIds": [
+        "wind",
+        "winter",
+        "kaffee",
+        "nacht",
+        "hand",
+        "milch",
+        "wasser",
+        "bier"
+      ]
+    },
+    {
+      "id": "heiss",
+      "base": "heiß",
+      "en": "hot",
+      "de": "heiß",
+      "es": "caliente",
+      "nounIds": [
+        "kaffee",
+        "sommer",
+        "tag",
+        "milch",
+        "sonne",
+        "wasser",
+        "essen",
+        "bier"
+      ]
+    },
+    {
+      "id": "lang",
+      "base": "lang",
+      "en": "long",
+      "de": "lang",
+      "es": "largo",
+      "nounIds": [
+        "weg",
+        "fluss",
+        "brief",
+        "nacht",
+        "strasse",
+        "haar",
+        "kleid",
+        "lied"
+      ]
+    },
+    {
+      "id": "kurz",
+      "base": "kurz",
+      "en": "short",
+      "de": "kurz",
+      "es": "corto",
+      "nounIds": [
+        "weg",
+        "film",
+        "brief",
+        "frage",
+        "hose",
+        "haar",
+        "lied",
+        "kleid"
+      ]
+    },
+    {
+      "id": "schnell",
+      "base": "schnell",
+      "en": "fast",
+      "de": "schnell",
+      "es": "rápido",
+      "nounIds": [
+        "zug",
+        "hund",
+        "computer",
+        "katze",
+        "auto",
+        "pferd",
+        "fahrrad",
+        "fisch"
+      ]
+    },
+    {
+      "id": "langsam",
+      "base": "langsam",
+      "en": "slow",
+      "de": "langsam",
+      "es": "lento",
+      "nounIds": [
+        "zug",
+        "fluss",
+        "computer",
+        "musik",
+        "auto",
+        "pferd",
+        "lied",
+        "fisch"
+      ]
+    },
+    {
+      "id": "stark",
+      "base": "stark",
+      "en": "strong",
+      "de": "stark",
+      "es": "fuerte",
+      "nounIds": [
+        "mann",
+        "kaffee",
+        "wind",
+        "stimme",
+        "hand",
+        "pferd",
+        "herz",
+        "arm"
+      ]
+    },
+    {
+      "id": "schwach",
+      "base": "schwach",
+      "en": "weak",
+      "de": "schwach",
+      "es": "débil",
+      "nounIds": [
+        "kaffee",
+        "wind",
+        "mann",
+        "stimme",
+        "hand",
+        "herz",
+        "arm",
+        "pferd"
+      ]
+    },
+    {
+      "id": "wichtig",
+      "base": "wichtig",
+      "en": "important",
+      "de": "wichtig",
+      "es": "importante",
+      "nounIds": [
+        "tag",
+        "brief",
+        "plan",
+        "frage",
+        "idee",
+        "buch",
+        "wort",
+        "job"
+      ]
+    },
+    {
+      "id": "interessant",
+      "base": "interessant",
+      "en": "interesting",
+      "de": "interessant",
+      "es": "interesante",
+      "nounIds": [
+        "film",
+        "mann",
+        "plan",
+        "idee",
+        "geschichte",
+        "frage",
+        "buch",
+        "lied"
+      ]
+    },
+    {
+      "id": "teuer",
+      "base": "teuer",
+      "stem": "teur",
+      "en": "expensive",
+      "de": "teuer",
+      "es": "caro",
+      "nounIds": [
+        "computer",
+        "mantel",
+        "schuh",
+        "wohnung",
+        "uhr",
+        "auto",
+        "handy",
+        "geschenk"
+      ]
+    },
+    {
+      "id": "billig",
+      "base": "billig",
+      "en": "cheap",
+      "de": "billig",
+      "es": "barato",
+      "nounIds": [
+        "wein",
+        "schuh",
+        "computer",
+        "wohnung",
+        "uhr",
+        "auto",
+        "hemd",
+        "handy"
+      ]
+    },
+    {
+      "id": "hoch",
+      "base": "hoch",
+      "stem": "hoh",
+      "en": "high, tall",
+      "de": "hoch",
+      "es": "alto",
+      "nounIds": [
+        "berg",
+        "turm",
+        "baum",
+        "preis",
+        "wand",
+        "haus",
+        "fenster",
+        "himmel"
+      ]
+    },
+    {
+      "id": "tief",
+      "base": "tief",
+      "en": "deep",
+      "de": "tief",
+      "es": "profundo",
+      "nounIds": [
+        "see",
+        "fluss",
+        "stimme",
+        "wald",
+        "meer",
+        "wasser",
+        "traum",
+        "schnee"
+      ]
+    },
+    {
+      "id": "dunkel",
+      "base": "dunkel",
+      "stem": "dunkl",
+      "en": "dark",
+      "de": "dunkel",
+      "es": "oscuro",
+      "nounIds": [
+        "wald",
+        "wein",
+        "himmel",
+        "nacht",
+        "strasse",
+        "zimmer",
+        "haar",
+        "bier"
+      ]
+    },
+    {
+      "id": "hell",
+      "base": "hell",
+      "en": "bright, light",
+      "de": "hell",
+      "es": "claro",
+      "nounIds": [
+        "tag",
+        "stern",
+        "himmel",
+        "sonne",
+        "stimme",
+        "zimmer",
+        "fenster",
+        "haar"
+      ]
+    },
+    {
+      "id": "frisch",
+      "base": "frisch",
+      "en": "fresh",
+      "de": "frisch",
+      "es": "fresco",
+      "nounIds": [
+        "wind",
+        "fisch",
+        "kaffee",
+        "milch",
+        "blume",
+        "brot",
+        "wasser",
+        "bier"
+      ]
+    },
+    {
+      "id": "lecker",
+      "base": "lecker",
+      "en": "tasty",
+      "de": "lecker",
+      "es": "delicioso",
+      "nounIds": [
+        "apfel",
+        "kaffee",
+        "fisch",
+        "milch",
+        "brot",
+        "essen",
+        "bier",
+        "wein"
+      ]
+    },
+    {
+      "id": "suess",
+      "base": "süß",
+      "en": "sweet",
+      "de": "süß",
+      "es": "dulce",
+      "nounIds": [
+        "apfel",
+        "wein",
+        "kaffee",
+        "milch",
+        "kind",
+        "maedchen",
+        "lied",
+        "traum"
+      ]
+    },
+    {
+      "id": "sauer",
+      "base": "sauer",
+      "stem": "saur",
+      "en": "sour",
+      "de": "sauer",
+      "es": "ácido",
+      "nounIds": [
+        "apfel",
+        "wein",
+        "milch",
+        "essen",
+        "bier"
+      ]
+    },
+    {
+      "id": "muede",
+      "base": "müde",
+      "stem": "müd",
+      "en": "tired",
+      "de": "müde",
+      "es": "cansado",
+      "nounIds": [
+        "mann",
+        "lehrer",
+        "frau",
+        "stimme",
+        "hand",
+        "kind",
+        "pferd",
+        "auge"
+      ]
+    },
+    {
+      "id": "gluecklich",
+      "base": "glücklich",
+      "en": "happy",
+      "de": "glücklich",
+      "es": "feliz",
+      "nounIds": [
+        "mann",
+        "freund",
+        "frau",
+        "mutter",
+        "tag",
+        "kind",
+        "maedchen",
+        "herz"
+      ]
+    },
+    {
+      "id": "traurig",
+      "base": "traurig",
+      "en": "sad",
+      "de": "traurig",
+      "es": "triste",
+      "nounIds": [
+        "film",
+        "mann",
+        "geschichte",
+        "stimme",
+        "frau",
+        "lied",
+        "kind",
+        "brief"
+      ]
+    },
+    {
+      "id": "laut",
+      "base": "laut",
+      "en": "loud",
+      "de": "laut",
+      "es": "ruidoso",
+      "nounIds": [
+        "hund",
+        "zug",
+        "musik",
+        "stimme",
+        "mann",
+        "kind",
+        "lied",
+        "wind"
+      ]
+    },
+    {
+      "id": "leise",
+      "base": "leise",
+      "stem": "leis",
+      "en": "quiet",
+      "de": "leise",
+      "es": "silencioso",
+      "nounIds": [
+        "wind",
+        "regen",
+        "musik",
+        "stimme",
+        "nacht",
+        "kind",
+        "lied",
+        "zimmer"
+      ]
+    },
+    {
+      "id": "sauber",
+      "base": "sauber",
+      "en": "clean",
+      "de": "sauber",
+      "es": "limpio",
+      "nounIds": [
+        "tisch",
+        "boden",
+        "hand",
+        "kueche",
+        "strasse",
+        "hemd",
+        "zimmer",
+        "fenster"
+      ]
+    },
+    {
+      "id": "schmutzig",
+      "base": "schmutzig",
+      "en": "dirty",
+      "de": "schmutzig",
+      "es": "sucio",
+      "nounIds": [
+        "schuh",
+        "boden",
+        "hand",
+        "strasse",
+        "auto",
+        "hemd",
+        "fenster",
+        "wasser"
+      ]
+    },
+    {
+      "id": "reich",
+      "base": "reich",
+      "en": "rich",
+      "de": "reich",
+      "es": "rico",
+      "nounIds": [
+        "mann",
+        "koenig",
+        "vater",
+        "frau",
+        "stadt",
+        "freund",
+        "land",
+        "dorf"
+      ]
+    },
+    {
+      "id": "arm",
+      "base": "arm",
+      "en": "poor",
+      "de": "arm",
+      "es": "pobre",
+      "nounIds": [
+        "mann",
+        "freund",
+        "frau",
+        "mutter",
+        "kind",
+        "maedchen",
+        "land",
+        "dorf"
+      ]
+    },
+    {
+      "id": "rot",
+      "base": "rot",
+      "en": "red",
+      "de": "rot",
+      "es": "rojo",
+      "nounIds": [
+        "apfel",
+        "wein",
+        "hut",
+        "blume",
+        "tasche",
+        "auto",
+        "kleid",
+        "herz"
+      ]
+    },
+    {
+      "id": "gruen",
+      "base": "grün",
+      "en": "green",
+      "de": "grün",
+      "es": "verde",
+      "nounIds": [
+        "baum",
+        "wald",
+        "garten",
+        "blume",
+        "hemd",
+        "auge",
+        "kleid",
+        "berg"
+      ]
+    },
+    {
+      "id": "blau",
+      "base": "blau",
+      "en": "blue",
+      "de": "blau",
+      "es": "azul",
+      "nounIds": [
+        "himmel",
+        "stern",
+        "hose",
+        "jacke",
+        "auge",
+        "meer",
+        "kleid",
+        "auto"
+      ]
+    },
+    {
+      "id": "schwarz",
+      "base": "schwarz",
+      "en": "black",
+      "de": "schwarz",
+      "es": "negro",
+      "nounIds": [
+        "kaffee",
+        "hund",
+        "mantel",
+        "schuh",
+        "katze",
+        "nacht",
+        "haar",
+        "auto"
+      ]
+    },
+    {
+      "id": "weiss",
+      "base": "weiß",
+      "en": "white",
+      "de": "weiß",
+      "es": "blanco",
+      "nounIds": [
+        "schnee",
+        "mantel",
+        "milch",
+        "wand",
+        "blume",
+        "hemd",
+        "kleid",
+        "pferd"
+      ]
+    },
+    {
+      "id": "gelb",
+      "base": "gelb",
+      "en": "yellow",
+      "de": "gelb",
+      "es": "amarillo",
+      "nounIds": [
+        "stern",
+        "vogel",
+        "sonne",
+        "blume",
+        "tasche",
+        "hemd",
+        "kleid",
+        "auto"
+      ]
+    },
+    {
+      "id": "voll",
+      "base": "voll",
+      "en": "full",
+      "de": "voll",
+      "es": "lleno",
+      "nounIds": [
+        "zug",
+        "wald",
+        "tag",
+        "tasche",
+        "strasse",
+        "herz",
+        "zimmer",
+        "haus"
+      ]
+    },
+    {
+      "id": "leer",
+      "base": "leer",
+      "en": "empty",
+      "de": "leer",
+      "es": "vacío",
+      "nounIds": [
+        "weg",
+        "tisch",
+        "strasse",
+        "wohnung",
+        "tasche",
+        "haus",
+        "zimmer",
+        "herz"
+      ]
+    },
+    {
+      "id": "sicher",
+      "base": "sicher",
+      "en": "safe, sure",
+      "de": "sicher",
+      "es": "seguro",
+      "nounIds": [
+        "weg",
+        "plan",
+        "job",
+        "hand",
+        "stadt",
+        "haus",
+        "land",
+        "gefuehl"
+      ]
+    },
+    {
+      "id": "gefaehrlich",
+      "base": "gefährlich",
+      "en": "dangerous",
+      "de": "gefährlich",
+      "es": "peligroso",
+      "nounIds": [
+        "weg",
+        "hund",
+        "fluss",
+        "strasse",
+        "berg",
+        "tier",
+        "job",
+        "plan"
+      ]
+    },
+    {
+      "id": "modern",
+      "base": "modern",
+      "en": "modern",
+      "de": "modern",
+      "es": "moderno",
+      "nounIds": [
+        "computer",
+        "mann",
+        "stadt",
+        "musik",
+        "wohnung",
+        "auto",
+        "bild",
+        "haus"
+      ]
+    },
+    {
+      "id": "beruehmt",
+      "base": "berühmt",
+      "en": "famous",
+      "de": "berühmt",
+      "es": "famoso",
+      "nounIds": [
+        "mann",
+        "koenig",
+        "film",
+        "frau",
+        "stadt",
+        "buch",
+        "lied",
+        "bild"
+      ]
+    },
+    {
+      "id": "freundlich",
+      "base": "freundlich",
+      "en": "friendly",
+      "de": "freundlich",
+      "es": "amable",
+      "nounIds": [
+        "mann",
+        "lehrer",
+        "arzt",
+        "frau",
+        "stimme",
+        "hund",
+        "kind",
+        "freund"
+      ]
+    }
+  ]
+}

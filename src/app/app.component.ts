@@ -22,6 +22,9 @@ import { I18nService, LANGS, Lang } from './core/i18n.service';
           <a routerLink="/vokabular" routerLinkActive="is-active">
             <span class="nav__label">{{ i18n.t('nav.vokabular') }}</span>
           </a>
+          <a routerLink="/adjektiv" routerLinkActive="is-active">
+            <span class="nav__label">{{ i18n.t('nav.adjektiv') }}</span>
+          </a>
           <a routerLink="/rules" routerLinkActive="is-active">
             <span class="nav__label">{{ i18n.t('nav.rules') }}</span>
           </a>

@@ -222,7 +222,13 @@ export class ProgressComponent implements OnInit {
   async ngOnInit() {
     await this.catalog.init();
     const states = await this.db.getAllCardStates();
-    const reviewed = states.filter((s) => s.lastResult !== null);
+    // The timeline + drill below are declension-only (adjective cells have no
+    // catalog.card()), so keep the headline counters in step by excluding the
+    // synthetic adjective cards here too — otherwise "due now" overcounts what
+    // the drill actually queues.
+    const reviewed = states.filter(
+      (s) => s.lastResult !== null && !s.cardId.startsWith('adj|'),
+    );
 
     this.totalReviewed = reviewed.length;
     this.mastered = reviewed.filter((s) => s.reps >= MASTERY_REPS).length;

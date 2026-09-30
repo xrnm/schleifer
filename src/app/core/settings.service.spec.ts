@@ -15,6 +15,9 @@ describe('SettingsService', () => {
       numberFilter: 'both',
       articleFilter: 'both',
       possessiveScope: 'off',
+      adjCaseFilter: 'all',
+      adjNumberFilter: 'both',
+      adjClassFilter: 'all',
     });
   });
 
@@ -24,11 +27,17 @@ describe('SettingsService', () => {
     svc.setNumberFilter('pl');
     svc.setArticleFilter('def');
     svc.setPossessiveScope('core4');
+    svc.setAdjCaseFilter('nom');
+    svc.setAdjNumberFilter('sg');
+    svc.setAdjClassFilter('mixed');
     expect(svc.settings()).toEqual({
       caseFilter: 'dat',
       numberFilter: 'pl',
       articleFilter: 'def',
       possessiveScope: 'core4',
+      adjCaseFilter: 'nom',
+      adjNumberFilter: 'sg',
+      adjClassFilter: 'mixed',
     });
     const raw = localStorage.getItem('schleifer.settings');
     expect(raw).toBeTruthy();
@@ -37,6 +46,9 @@ describe('SettingsService', () => {
       numberFilter: 'pl',
       articleFilter: 'def',
       possessiveScope: 'core4',
+      adjCaseFilter: 'nom',
+      adjNumberFilter: 'sg',
+      adjClassFilter: 'mixed',
     });
   });
 
@@ -56,6 +68,9 @@ describe('SettingsService', () => {
       numberFilter: 'sg',
       articleFilter: 'indef',
       possessiveScope: 'all7',
+      adjCaseFilter: 'all',
+      adjNumberFilter: 'both',
+      adjClassFilter: 'all',
     });
   });
 
@@ -69,6 +84,9 @@ describe('SettingsService', () => {
       numberFilter: 'both',
       articleFilter: 'both',
       possessiveScope: 'off',
+      adjCaseFilter: 'all',
+      adjNumberFilter: 'both',
+      adjClassFilter: 'all',
     });
   });
 
@@ -88,6 +106,9 @@ describe('SettingsService', () => {
       numberFilter: 'pl',
       articleFilter: 'both',
       possessiveScope: 'off',
+      adjCaseFilter: 'all',
+      adjNumberFilter: 'both',
+      adjClassFilter: 'all',
     });
   });
 });
