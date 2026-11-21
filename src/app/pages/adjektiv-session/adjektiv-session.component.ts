@@ -19,7 +19,8 @@ import {
   AdjCell,
   AdjSurface,
   adjPhraseGlossEn,
-  checkAdjAnswer,
+  acceptedAdjPhrases,
+  checkAdjAnswerAny,
   detectAdjClassMismatch,
   expectedAdjPhrase,
   parseAdjCellId,
@@ -35,6 +36,8 @@ interface QueuedCard {
   adj: AdjectiveEntry;
   noun: Noun;
   expected: string;
+  // Every phrase graded correct (genitive -es/-s variants); expected is [0].
+  accepted: string[];
   glossEn: string;
   // The noun in nominative singular with its definite article ("die Milch") —
   // shown in feedback so the gender that drives the ending is always taught.
@@ -57,6 +60,7 @@ const CASE_LABEL: Record<string, string> = {
   nom: 'Nominativ',
   acc: 'Akkusativ',
   dat: 'Dativ',
+  gen: 'Genitiv',
 };
 const NUMBER_LABEL: Record<string, string> = { sg: 'Singular', pl: 'Plural' };
 const CLASS_LABEL: Record<string, string> = {
@@ -581,6 +585,7 @@ export class AdjektivSessionComponent implements OnInit, AfterViewInit {
         adj: surface.adj,
         noun: surface.noun,
         expected: expectedAdjPhrase(surface.adj, surface.noun, cell),
+        accepted: acceptedAdjPhrases(surface.adj, surface.noun, cell),
         glossEn: adjPhraseGlossEn(surface.adj, surface.noun, cell),
         nom: this.nounNominative(surface.noun),
       });
@@ -612,7 +617,7 @@ export class AdjektivSessionComponent implements OnInit, AfterViewInit {
   async onSubmit(ev: Event) {
     ev.preventDefault();
     if (!this.current || !this.session) return;
-    const check = checkAdjAnswer(this.entered, this.current.expected);
+    const check = checkAdjAnswerAny(this.entered, this.current.accepted);
     if (check.kind === 'wrong') {
       // Right ending, wrong class? Don't lock it in — shake and reprompt so
       // they can switch to this card's declension type.

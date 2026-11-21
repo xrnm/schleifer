@@ -5,10 +5,13 @@ import {
   adjPhraseGlossEn,
   adjectiveEnding,
   allAdjCells,
+  acceptedAdjPhrases,
   checkAdjAnswer,
+  checkAdjAnswerAny,
   declineAdjective,
   detectAdjClassMismatch,
   expectedAdjPhrase,
+  genitiveSingularForms,
   isAdjectiveCardId,
   parseAdjCellId,
   pickAdjSurface,
@@ -101,6 +104,63 @@ describe('expectedAdjPhrase', () => {
   });
 });
 
+describe('genitive', () => {
+  const noun = (singular: string, gender: Noun['gender']): Noun =>
+    ({ id: singular.toLowerCase(), singular, plural: null, pluralOnly: false, gender, importance: 5, english: 'x' });
+
+  it('genitive endings per class', () => {
+    expect(adjectiveEnding(sg('weak', 'm', 'gen'))).toBe('en');
+    expect(adjectiveEnding(sg('mixed', 'f', 'gen'))).toBe('en');
+    expect(adjectiveEnding(sg('strong', 'm', 'gen'))).toBe('en');
+    expect(adjectiveEnding(sg('strong', 'f', 'gen'))).toBe('er');
+    expect(adjectiveEnding(sg('strong', 'n', 'gen'))).toBe('en');
+    expect(adjectiveEnding(pl('strong', 'gen'))).toBe('er');
+    expect(adjectiveEnding(pl('weak', 'gen'))).toBe('en');
+  });
+
+  it('noun genitive singular forms', () => {
+    expect(genitiveSingularForms(noun('Wein', 'm'))).toEqual(['Weines', 'Weins']);
+    expect(genitiveSingularForms(noun('Haus', 'n'))).toEqual(['Hauses']);
+    expect(genitiveSingularForms(noun('Fluss', 'm'))).toEqual(['Flusses']);
+    expect(genitiveSingularForms(noun('Auto', 'n'))).toEqual(['Autos']);
+    expect(genitiveSingularForms(noun('See', 'm'))).toEqual(['Sees']);
+    expect(genitiveSingularForms(noun('Lehrer', 'm'))).toEqual(['Lehrers']);
+    expect(genitiveSingularForms(noun('König', 'm'))).toEqual(['Königs']);
+    expect(genitiveSingularForms(noun('Gefühl', 'n'))).toEqual(['Gefühles', 'Gefühls']);
+    expect(genitiveSingularForms(noun('Herz', 'n'))).toEqual(['Herzens']);
+    expect(genitiveSingularForms(noun('Job', 'm'))).toEqual(['Jobs']);
+    expect(genitiveSingularForms(noun('Frau', 'f'))).toEqual(['Frau']);
+  });
+
+  it('full genitive phrases', () => {
+    expect(expectedAdjPhrase(gut, wein, sg('weak', 'm', 'gen'))).toBe('des guten Weines');
+    expect(expectedAdjPhrase(gut, wein, sg('mixed', 'm', 'gen'))).toBe('eines guten Weines');
+    expect(expectedAdjPhrase(gut, wasser, sg('strong', 'n', 'gen'))).toBe('guten Wassers');
+    expect(expectedAdjPhrase(gut, frau, sg('strong', 'f', 'gen'))).toBe('guter Frau');
+    expect(expectedAdjPhrase(gut, frau, sg('mixed', 'f', 'gen'))).toBe('einer guten Frau');
+    expect(expectedAdjPhrase(hoch, haus, sg('weak', 'n', 'gen'))).toBe('des hohen Hauses');
+    expect(expectedAdjPhrase(gut, wein, pl('weak', 'gen'))).toBe('der guten Weine');
+    expect(expectedAdjPhrase(gut, wein, pl('mixed', 'gen'))).toBe('meiner guten Weine');
+    expect(expectedAdjPhrase(gut, wein, pl('strong', 'gen'))).toBe('guter Weine');
+  });
+
+  it('accepts both -es and -s where German allows both', () => {
+    const accepted = acceptedAdjPhrases(gut, wein, sg('weak', 'm', 'gen'));
+    expect(accepted).toEqual(['des guten Weines', 'des guten Weins']);
+    expect(checkAdjAnswerAny('des guten Weins', accepted).kind).toBe('exact');
+    expect(checkAdjAnswerAny('des guten Wein', accepted).kind).toBe('wrong');
+    expect(checkAdjAnswerAny('des gutes Weines', accepted).kind).toBe('wrong');
+  });
+
+  it('class mismatch works with the short genitive variant', () => {
+    expect(detectAdjClassMismatch('des guten Weins', gut, wein, sg('mixed', 'm', 'gen'))).toBe('weak');
+  });
+
+  it('glosses genitive with "of"', () => {
+    expect(adjPhraseGlossEn(gut, wein, sg('weak', 'm', 'gen'))).toBe('of the good wine');
+  });
+});
+
 describe('adjPhraseGlossEn', () => {
   it('composes the whole phrase in English', () => {
     expect(adjPhraseGlossEn(gut, fenster, sg('mixed', 'n', 'nom'))).toBe('a good window');
@@ -116,9 +176,9 @@ describe('adjPhraseGlossEn', () => {
 });
 
 describe('card ids', () => {
-  it('there are 36 ending cells and all ids round-trip', () => {
+  it('there are 48 ending cells and all ids round-trip', () => {
     const cells = allAdjCells();
-    expect(cells.length).toBe(36);
+    expect(cells.length).toBe(48);
     for (const cell of cells) {
       const id = adjCellId(cell);
       expect(isAdjectiveCardId(id)).toBe(true);

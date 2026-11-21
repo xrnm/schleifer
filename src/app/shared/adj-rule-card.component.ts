@@ -27,6 +27,7 @@ const CASES: { key: CaseT; label: string }[] = [
   { key: 'nom', label: 'Nominativ' },
   { key: 'acc', label: 'Akkusativ' },
   { key: 'dat', label: 'Dativ' },
+  { key: 'gen', label: 'Genitiv' },
 ];
 
 function end(cls: AdjClass, caseT: CaseT, gender: Gender): string {

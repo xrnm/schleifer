@@ -1,5 +1,7 @@
 export type Gender = 'm' | 'f' | 'n';
-export type CaseT = 'nom' | 'acc' | 'dat';
+// `gen` is drilled only in the adjective area; the Deklination area still
+// generates nom/acc/dat cards and its filter offers only those.
+export type CaseT = 'nom' | 'acc' | 'dat' | 'gen';
 export type NumberT = 'sg' | 'pl';
 export type ArticleT = 'def' | 'indef' | 'poss';
 export type AnswerResult = 'correct' | 'incorrect' | 'idk' | 'skipped';
@@ -36,7 +38,8 @@ export interface AppSettings {
   articleFilter: ArticleFilter;
   possessiveScope: PossessiveScope;
   // Adjective-area filters (Fall · Numerus · Deklinationstyp).
-  adjCaseFilter: CaseFilter;
+  // Multi-select: the cases to drill. Never empty; all four means "Alle".
+  adjCaseFilter: CaseT[];
   adjNumberFilter: NumberFilter;
   adjClassFilter: AdjClassFilter;
 }

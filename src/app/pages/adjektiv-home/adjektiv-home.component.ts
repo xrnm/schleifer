@@ -5,12 +5,12 @@ import { DbService } from '../../core/db.service';
 import { I18nService, LOCALE_BY_LANG } from '../../core/i18n.service';
 import { SelectorService } from '../../core/selector.service';
 import { SessionStarterService } from '../../core/session-starter.service';
-import { SettingsService } from '../../core/settings.service';
-import { AdjClassFilter, CaseFilter, NumberFilter, Session } from '../../models/types';
+import { ALL_ADJ_CASES, SettingsService } from '../../core/settings.service';
+import { AdjClassFilter, CaseT, NumberFilter, Session } from '../../models/types';
 import { isAdjectiveCardId } from '../../core/adjective';
 import { AdjRuleCardComponent } from '../../shared/adj-rule-card.component';
 
-// Only 36 ending cells exist, so a full-ish sweep is a sensible daily target;
+// Only 48 ending cells exist, so a full-ish sweep is a sensible daily target;
 // once the table is learned, the due queue drives session length down.
 const SESSION_TARGET = 30;
 
@@ -66,12 +66,20 @@ const SESSION_TARGET = 30;
             <div class="settings-row">
               <span class="settings-row__k">{{ i18n.t('settings.case') }}</span>
               <div class="settings-pills" role="group" [attr.aria-label]="i18n.t('settings.case')">
+                <button
+                  type="button"
+                  class="pill"
+                  [class.is-active]="allCasesOn()"
+                  [attr.aria-pressed]="allCasesOn()"
+                  (click)="selectAllCases()"
+                >{{ i18n.t('settings.case.all') }}</button>
                 @for (opt of caseOptions; track opt.value) {
                   <button
                     type="button"
                     class="pill"
-                    [class.is-active]="settings.settings().adjCaseFilter === opt.value"
-                    (click)="setCase(opt.value)"
+                    [class.is-active]="caseOn(opt.value)"
+                    [attr.aria-pressed]="caseOn(opt.value)"
+                    (click)="toggleCase(opt.value)"
                   >{{ i18n.t(opt.labelKey) }}</button>
                 }
               </div>
@@ -272,11 +280,12 @@ export class AdjektivHomeComponent implements OnInit {
   drawerOpen = signal(false);
   ruleOpen = signal(false);
 
-  readonly caseOptions: { value: CaseFilter; labelKey: string }[] = [
-    { value: 'all', labelKey: 'settings.case.all' },
+  // Multi-select: each case toggles independently; "Alle" turns them all on.
+  readonly caseOptions: { value: CaseT; labelKey: string }[] = [
     { value: 'nom', labelKey: 'settings.case.nom' },
     { value: 'acc', labelKey: 'settings.case.acc' },
     { value: 'dat', labelKey: 'settings.case.dat' },
+    { value: 'gen', labelKey: 'settings.case.gen' },
   ];
   readonly numberOptions: { value: NumberFilter; labelKey: string }[] = [
     { value: 'both', labelKey: 'settings.number.both' },
@@ -292,8 +301,21 @@ export class AdjektivHomeComponent implements OnInit {
 
   toggleDrawer() { this.drawerOpen.update((v) => !v); }
 
-  setCase(v: CaseFilter) {
-    this.settings.setAdjCaseFilter(v);
+  caseOn(c: CaseT): boolean {
+    return this.settings.settings().adjCaseFilter.includes(c);
+  }
+  allCasesOn(): boolean {
+    return this.settings.settings().adjCaseFilter.length === ALL_ADJ_CASES.length;
+  }
+  selectAllCases() {
+    this.settings.setAdjCaseFilter([...ALL_ADJ_CASES]);
+    void this.refreshDueNow();
+  }
+  // Toggling off the last remaining case is a no-op (the service refuses an
+  // empty selection), so there is always something to drill.
+  toggleCase(c: CaseT) {
+    const cur = this.settings.settings().adjCaseFilter;
+    this.settings.setAdjCaseFilter(cur.includes(c) ? cur.filter((x) => x !== c) : [...cur, c]);
     void this.refreshDueNow();
   }
   setNumber(v: NumberFilter) {

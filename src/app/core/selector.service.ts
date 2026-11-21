@@ -207,7 +207,7 @@ export class SelectorService {
 
   /**
    * Returns the adjective ending-cell ids to present this session, ordered
-   * review → recent-fail → new. The universe is the 36 cells (filtered by the
+   * review → recent-fail → new. The universe is the 48 cells (filtered by the
    * adjective drawer); each cell is one SRS card in the shared cardStates
    * store. The surface (which adjective/noun) is chosen at render time.
    */
@@ -339,7 +339,7 @@ export class SelectorService {
 }
 
 function matchesAdjFilters(cell: AdjCell, f: AppSettings): boolean {
-  if (f.adjCaseFilter !== 'all' && cell.case !== f.adjCaseFilter) return false;
+  if (!f.adjCaseFilter.includes(cell.case)) return false;
   if (f.adjNumberFilter !== 'both' && cell.number !== f.adjNumberFilter) return false;
   if (f.adjClassFilter !== 'all' && cell.cls !== f.adjClassFilter) return false;
   return true;

@@ -9,7 +9,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const WEEK_MS = 7 * DAY_MS;
 const MASTERY_REPS = 4;
 
-const CASE_LABEL: Record<string, string> = { nom: 'Nom', acc: 'Akk', dat: 'Dat' };
+const CASE_LABEL: Record<string, string> = { nom: 'Nom', acc: 'Akk', dat: 'Dat', gen: 'Gen' };
 const NUMBER_LABEL: Record<string, string> = { sg: 'Sg', pl: 'Pl' };
 const ARTICLE_LABEL: Record<string, string> = {
   def: 'best.',

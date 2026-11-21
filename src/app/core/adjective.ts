@@ -17,7 +17,7 @@ import {
 
 // A single drillable ending cell — the unit the SRS schedules. Singular cells
 // are per (class × gender × case); plural cells collapse gender, so they are
-// per (class × case). 3 classes × (3×3 sg + 3 pl) = 36 cells total.
+// per (class × case). 3 classes × 4 cases × (3 sg + 1 pl) = 48 cells total.
 export interface AdjCell {
   cls: AdjClass;
   number: NumberT;
@@ -26,10 +26,10 @@ export interface AdjCell {
 }
 
 const CLASSES: AdjClass[] = ['weak', 'mixed', 'strong'];
-const CASES: CaseT[] = ['nom', 'acc', 'dat'];
+const CASES: CaseT[] = ['nom', 'acc', 'dat', 'gen'];
 const GENDERS: Gender[] = ['m', 'f', 'n'];
 
-// The adjective-ending table for nom/acc/dat. Singular endings are indexed by
+// The adjective-ending table for all four cases. Singular endings are indexed by
 // gender; plural endings are gender-independent.
 const ADJ_END: Record<
   AdjClass,
@@ -43,24 +43,29 @@ const ADJ_END: Record<
       nom: { m: 'e', f: 'e', n: 'e' },
       acc: { m: 'en', f: 'e', n: 'e' },
       dat: { m: 'en', f: 'en', n: 'en' },
+      gen: { m: 'en', f: 'en', n: 'en' },
     },
-    pl: { nom: 'en', acc: 'en', dat: 'en' },
+    pl: { nom: 'en', acc: 'en', dat: 'en', gen: 'en' },
   },
   mixed: {
     sg: {
       nom: { m: 'er', f: 'e', n: 'es' },
       acc: { m: 'en', f: 'e', n: 'es' },
       dat: { m: 'en', f: 'en', n: 'en' },
+      gen: { m: 'en', f: 'en', n: 'en' },
     },
-    pl: { nom: 'en', acc: 'en', dat: 'en' },
+    pl: { nom: 'en', acc: 'en', dat: 'en', gen: 'en' },
   },
   strong: {
     sg: {
       nom: { m: 'er', f: 'e', n: 'es' },
       acc: { m: 'en', f: 'e', n: 'es' },
       dat: { m: 'em', f: 'er', n: 'em' },
+      // Strong masc/neut genitive is -en, not -es: the noun's own -(e)s
+      // already marks the case ("trotz schlechten Wetters").
+      gen: { m: 'en', f: 'er', n: 'en' },
     },
-    pl: { nom: 'e', acc: 'e', dat: 'en' },
+    pl: { nom: 'e', acc: 'e', dat: 'en', gen: 'er' },
   },
 };
 
@@ -92,22 +97,83 @@ export function adjDeterminer(cell: AdjCell, gender: Gender): string {
   return possessiveForm('mein', gender, 'pl', cell.case);
 }
 
-function nounSurface(noun: Noun, number: NumberT, caseT: CaseT): string {
-  if (number === 'sg') return noun.singular;
-  const pl = noun.plural ?? noun.singular;
-  return caseT === 'dat' ? dativePlural(pl) : pl;
+// Genitive-singular forms that the rules below would get wrong: mixed
+// declension (Herz), n-declension masculines, and anglicisms that never take
+// -es. Keyed by the singular. Canonical form first.
+const GEN_SG_OVERRIDES: Record<string, string[]> = {
+  Herz: ['Herzens'],
+  Name: ['Namens'],
+  Glaube: ['Glaubens'],
+  Gedanke: ['Gedankens'],
+  Buchstabe: ['Buchstabens'],
+  Friede: ['Friedens'],
+  Wille: ['Willens'],
+  Junge: ['Jungen'],
+  Kollege: ['Kollegen'],
+  Kunde: ['Kunden'],
+  Mensch: ['Menschen'],
+  Herr: ['Herrn'],
+  Student: ['Studenten'],
+  Nachbar: ['Nachbarn'],
+  Job: ['Jobs'],
+  Film: ['Films', 'Filmes'],
+};
+
+// Polysyllabic nouns whose stressed final syllable takes -(e)s like a
+// monosyllable (Gefühl → Gefühles/Gefühls).
+const STRESSED_FINAL = new Set(['Fahrrad', 'Gefühl', 'Geschenk']);
+
+/**
+ * Accepted genitive-singular forms of a noun, canonical first. Feminine nouns
+ * don't change. Masc/neut:
+ *   - sibilant ending (s, ß, x, z)        → -es only     (Haus → Hauses)
+ *   - vowel ending                        → -s only      (Auto → Autos, See → Sees)
+ *   - monosyllable / stressed final       → -es or -s    (Wein → Weines/Weins)
+ *   - other polysyllables (-er/-el/-en…)  → -s only      (Lehrer → Lehrers)
+ */
+export function genitiveSingularForms(noun: Noun): string[] {
+  const w = noun.singular;
+  if (noun.gender === 'f') return [w];
+  const override = GEN_SG_OVERRIDES[w];
+  if (override && override.length) return override;
+  if (/(s|ß|x|z)$/.test(w)) return [w + 'es'];
+  if (/[aeiouäöüy]$/i.test(w)) return [w + 's'];
+  const syllables = (w.match(/[aeiouäöüy]+/gi) ?? []).length;
+  if (syllables <= 1 || STRESSED_FINAL.has(w)) return [w + 'es', w + 's'];
+  return [w + 's'];
 }
 
-/** The full expected phrase, e.g. "dem guten Wein", "kaltem Wasser". */
+// Every acceptable noun form for the cell, canonical first. Only the
+// masc/neut genitive singular has more than one.
+function nounSurfaces(noun: Noun, number: NumberT, caseT: CaseT): string[] {
+  if (number === 'sg') {
+    return caseT === 'gen' ? genitiveSingularForms(noun) : [noun.singular];
+  }
+  const pl = noun.plural ?? noun.singular;
+  return [caseT === 'dat' ? dativePlural(pl) : pl];
+}
+
+/** Every phrase graded as correct for the cell, canonical first — e.g.
+ *  ["des guten Weines", "des guten Weins"]. */
+export function acceptedAdjPhrases(
+  adj: AdjectiveEntry,
+  noun: Noun,
+  cell: AdjCell,
+): string[] {
+  const det = adjDeterminer(cell, noun.gender);
+  const a = declineAdjective(adj, cell);
+  return nounSurfaces(noun, cell.number, cell.case).map((n) =>
+    det ? `${det} ${a} ${n}` : `${a} ${n}`,
+  );
+}
+
+/** The canonical expected phrase, e.g. "dem guten Wein", "kaltem Wasser". */
 export function expectedAdjPhrase(
   adj: AdjectiveEntry,
   noun: Noun,
   cell: AdjCell,
 ): string {
-  const det = adjDeterminer(cell, noun.gender);
-  const a = declineAdjective(adj, cell);
-  const n = nounSurface(noun, cell.number, cell.case);
-  return det ? `${det} ${a} ${n}` : `${a} ${n}`;
+  return acceptedAdjPhrases(adj, noun, cell)[0];
 }
 
 /**
@@ -130,7 +196,8 @@ export function adjPhraseGlossEn(
   }
   const nounGloss = noun.english.split(';')[0].split(',')[0].trim();
   const plural = cell.number === 'pl' ? pluralizeEn(nounGloss) : nounGloss;
-  return `${article}${adj.en} ${plural}`;
+  const of = cell.case === 'gen' ? 'of ' : '';
+  return `${of}${article}${adj.en} ${plural}`;
 }
 
 // Common irregular English plurals, so a gloss reads "men" not "mans".
@@ -193,7 +260,7 @@ export function parseAdjCellId(id: string): AdjCell | null {
   return null;
 }
 
-/** All 36 ending cells. */
+/** All 48 ending cells. */
 export function allAdjCells(): AdjCell[] {
   const cells: AdjCell[] = [];
   for (const cls of CLASSES) {
@@ -298,6 +365,19 @@ export function checkAdjAnswer(entered: string, expected: string): AdjCheck {
   return { kind: 'caps' };
 }
 
+const CHECK_RANK: Record<AdjCheck['kind'], number> = { exact: 3, caps: 2, typo: 1, wrong: 0 };
+
+/** Grade against every accepted variant and keep the best result. */
+export function checkAdjAnswerAny(entered: string, accepted: string[]): AdjCheck {
+  let best: AdjCheck = { kind: 'wrong' };
+  for (const x of accepted) {
+    const r = checkAdjAnswer(entered, x);
+    if (CHECK_RANK[r.kind] > CHECK_RANK[best.kind]) best = r;
+    if (best.kind === 'exact') break;
+  }
+  return best;
+}
+
 // Lowercase only the first character, so two strings that differ solely in the
 // case of their leading letter compare equal.
 function foldFirst(s: string): string {
@@ -323,8 +403,7 @@ export function detectAdjClassMismatch(
 ): AdjClass | null {
   for (const other of ALL_CLASSES) {
     if (other === cell.cls) continue;
-    const otherExpected = expectedAdjPhrase(adj, noun, { ...cell, cls: other });
-    const r = checkAdjAnswer(entered, otherExpected);
+    const r = checkAdjAnswerAny(entered, acceptedAdjPhrases(adj, noun, { ...cell, cls: other }));
     if (r.kind === 'exact' || r.kind === 'caps') return other;
   }
   return null;

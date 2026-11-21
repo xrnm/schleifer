@@ -49,6 +49,7 @@ const CASE_LABEL: Record<string, string> = {
   nom: 'Nominativ',
   acc: 'Akkusativ',
   dat: 'Dativ',
+  gen: 'Genitiv',
 };
 const NUMBER_LABEL: Record<string, string> = { sg: 'Singular', pl: 'Plural' };
 const ARTICLE_LABEL: Record<string, string> = {

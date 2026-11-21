@@ -9,26 +9,26 @@ import {
 } from '../models/types';
 
 const DEF_SG: Record<Gender, Record<CaseT, string>> = {
-  m: { nom: 'der', acc: 'den', dat: 'dem' },
-  f: { nom: 'die', acc: 'die', dat: 'der' },
-  n: { nom: 'das', acc: 'das', dat: 'dem' },
+  m: { nom: 'der', acc: 'den', dat: 'dem', gen: 'des' },
+  f: { nom: 'die', acc: 'die', dat: 'der', gen: 'der' },
+  n: { nom: 'das', acc: 'das', dat: 'dem', gen: 'des' },
 };
-const DEF_PL: Record<CaseT, string> = { nom: 'die', acc: 'die', dat: 'den' };
+const DEF_PL: Record<CaseT, string> = { nom: 'die', acc: 'die', dat: 'den', gen: 'der' };
 const INDEF_SG: Record<Gender, Record<CaseT, string>> = {
-  m: { nom: 'ein', acc: 'einen', dat: 'einem' },
-  f: { nom: 'eine', acc: 'eine', dat: 'einer' },
-  n: { nom: 'ein', acc: 'ein', dat: 'einem' },
+  m: { nom: 'ein', acc: 'einen', dat: 'einem', gen: 'eines' },
+  f: { nom: 'eine', acc: 'eine', dat: 'einer', gen: 'einer' },
+  n: { nom: 'ein', acc: 'ein', dat: 'einem', gen: 'eines' },
 };
 
 // Possessives ("Possessivartikel"/"ein-Wörter") decline like `ein`: empty
 // ending in the masc/neut nominative and neut accusative, otherwise -e/-en/-em/-er.
 // Plurals always take -e/-en endings regardless of the noun's gender.
 const POSS_END_SG: Record<Gender, Record<CaseT, string>> = {
-  m: { nom: '',  acc: 'en', dat: 'em' },
-  f: { nom: 'e', acc: 'e',  dat: 'er' },
-  n: { nom: '',  acc: '',   dat: 'em' },
+  m: { nom: '',  acc: 'en', dat: 'em', gen: 'es' },
+  f: { nom: 'e', acc: 'e',  dat: 'er', gen: 'er' },
+  n: { nom: '',  acc: '',   dat: 'em', gen: 'es' },
 };
-const POSS_END_PL: Record<CaseT, string> = { nom: 'e', acc: 'e', dat: 'en' };
+const POSS_END_PL: Record<CaseT, string> = { nom: 'e', acc: 'e', dat: 'en', gen: 'er' };
 
 // Full set of possessive stems used by the drill. `ihr` covers her & their —
 // the declension is identical, so they share a single stem.

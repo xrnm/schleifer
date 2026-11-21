@@ -4,18 +4,21 @@ import {
   AppSettings,
   ArticleFilter,
   CaseFilter,
+  CaseT,
   NumberFilter,
   PossessiveScope,
 } from '../models/types';
 
 const STORAGE_KEY = 'schleifer.settings';
 
+export const ALL_ADJ_CASES: readonly CaseT[] = ['nom', 'acc', 'dat', 'gen'];
+
 const DEFAULTS: AppSettings = {
   caseFilter: 'all',
   numberFilter: 'both',
   articleFilter: 'both',
   possessiveScope: 'off',
-  adjCaseFilter: 'all',
+  adjCaseFilter: [...ALL_ADJ_CASES],
   adjNumberFilter: 'both',
   adjClassFilter: 'all',
 };
@@ -44,8 +47,13 @@ export class SettingsService {
     this.persist();
   }
 
-  setAdjCaseFilter(v: CaseFilter) {
-    this.settings.update((s) => ({ ...s, adjCaseFilter: v }));
+  /** Replace the adjective case selection. An empty selection is ignored —
+   *  there must always be at least one case to drill. Stored in canonical
+   *  nom/acc/dat/gen order. */
+  setAdjCaseFilter(v: CaseT[]) {
+    const picked = ALL_ADJ_CASES.filter((c) => v.includes(c));
+    if (picked.length === 0) return;
+    this.settings.update((s) => ({ ...s, adjCaseFilter: picked }));
     this.persist();
   }
 
@@ -75,9 +83,7 @@ export class SettingsService {
         possessiveScope: isPossessiveScope(parsed.possessiveScope)
           ? parsed.possessiveScope
           : DEFAULTS.possessiveScope,
-        adjCaseFilter: isCaseFilter(parsed.adjCaseFilter)
-          ? parsed.adjCaseFilter
-          : DEFAULTS.adjCaseFilter,
+        adjCaseFilter: parseAdjCases(parsed.adjCaseFilter),
         adjNumberFilter: isNumberFilter(parsed.adjNumberFilter)
           ? parsed.adjNumberFilter
           : DEFAULTS.adjNumberFilter,
@@ -89,6 +95,18 @@ export class SettingsService {
       return { ...DEFAULTS };
     }
   }
+}
+
+// Accepts the current array form and the pre-genitive single-choice string
+// ('all' | 'nom' | 'acc' | 'dat'), so an old stored 'all' now includes Genitiv.
+function parseAdjCases(v: unknown): CaseT[] {
+  if (Array.isArray(v)) {
+    const picked = ALL_ADJ_CASES.filter((c) => v.includes(c));
+    if (picked.length > 0) return picked;
+  } else if (v === 'nom' || v === 'acc' || v === 'dat') {
+    return [v];
+  }
+  return [...ALL_ADJ_CASES];
 }
 
 function isAdjClassFilter(v: unknown): v is AdjClassFilter {

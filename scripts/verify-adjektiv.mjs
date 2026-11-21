@@ -32,17 +32,18 @@ for (const a of adj.adjectives) {
 console.log(`  ${adj.adjectives.length} adjectives checked`);
 
 // --- ending table smoke test (mirrors src/app/core/adjective.ts) ---
-const DEF_SG = { m: { nom: 'der', acc: 'den', dat: 'dem' }, f: { nom: 'die', acc: 'die', dat: 'der' }, n: { nom: 'das', acc: 'das', dat: 'dem' } };
-const DEF_PL = { nom: 'die', acc: 'die', dat: 'den' };
-const INDEF_SG = { m: { nom: 'ein', acc: 'einen', dat: 'einem' }, f: { nom: 'eine', acc: 'eine', dat: 'einer' }, n: { nom: 'ein', acc: 'ein', dat: 'einem' } };
-const MEIN_PL = { nom: 'meine', acc: 'meine', dat: 'meinen' };
+const DEF_SG = { m: { nom: 'der', acc: 'den', dat: 'dem', gen: 'des' }, f: { nom: 'die', acc: 'die', dat: 'der', gen: 'der' }, n: { nom: 'das', acc: 'das', dat: 'dem', gen: 'des' } };
+const DEF_PL = { nom: 'die', acc: 'die', dat: 'den', gen: 'der' };
+const INDEF_SG = { m: { nom: 'ein', acc: 'einen', dat: 'einem', gen: 'eines' }, f: { nom: 'eine', acc: 'eine', dat: 'einer', gen: 'einer' }, n: { nom: 'ein', acc: 'ein', dat: 'einem', gen: 'eines' } };
+const MEIN_PL = { nom: 'meine', acc: 'meine', dat: 'meinen', gen: 'meiner' };
 const E = {
-  weak: { sg: { nom: { m: 'e', f: 'e', n: 'e' }, acc: { m: 'en', f: 'e', n: 'e' }, dat: { m: 'en', f: 'en', n: 'en' } }, pl: { nom: 'en', acc: 'en', dat: 'en' } },
-  mixed: { sg: { nom: { m: 'er', f: 'e', n: 'es' }, acc: { m: 'en', f: 'e', n: 'es' }, dat: { m: 'en', f: 'en', n: 'en' } }, pl: { nom: 'en', acc: 'en', dat: 'en' } },
-  strong: { sg: { nom: { m: 'er', f: 'e', n: 'es' }, acc: { m: 'en', f: 'e', n: 'es' }, dat: { m: 'em', f: 'er', n: 'em' } }, pl: { nom: 'e', acc: 'e', dat: 'en' } },
+  weak: { sg: { nom: { m: 'e', f: 'e', n: 'e' }, acc: { m: 'en', f: 'e', n: 'e' }, dat: { m: 'en', f: 'en', n: 'en' }, gen: { m: 'en', f: 'en', n: 'en' } }, pl: { nom: 'en', acc: 'en', dat: 'en', gen: 'en' } },
+  mixed: { sg: { nom: { m: 'er', f: 'e', n: 'es' }, acc: { m: 'en', f: 'e', n: 'es' }, dat: { m: 'en', f: 'en', n: 'en' }, gen: { m: 'en', f: 'en', n: 'en' } }, pl: { nom: 'en', acc: 'en', dat: 'en', gen: 'en' } },
+  strong: { sg: { nom: { m: 'er', f: 'e', n: 'es' }, acc: { m: 'en', f: 'e', n: 'es' }, dat: { m: 'em', f: 'er', n: 'em' }, gen: { m: 'en', f: 'er', n: 'en' } }, pl: { nom: 'e', acc: 'e', dat: 'en', gen: 'er' } },
 };
 const stemOf = (a) => a.stem ?? a.base;
 const dativePlural = (p) => (/[ns]$/.test(p) ? p : p + 'n');
+const GEN = { wein: 'Weines', auto: 'Autos', haus: 'Hauses', zimmer: 'Zimmers' };
 function phrase(aId, nId, cls, num, cs) {
   const a = adj.adjectives.find((x) => x.id === aId);
   const n = byId.get(nId);
@@ -51,7 +52,9 @@ function phrase(aId, nId, cls, num, cs) {
   let art = '';
   if (cls === 'weak') art = (num === 'pl' ? DEF_PL[cs] : DEF_SG[n.gender][cs]) + ' ';
   else if (cls === 'mixed') art = (num === 'pl' ? MEIN_PL[cs] : INDEF_SG[n.gender][cs]) + ' ';
-  const noun = num === 'pl' ? (cs === 'dat' ? dativePlural(n.plural) : n.plural) : n.singular;
+  // Genitive singular here is just the canonical form for the smoke cases;
+  // the full -es/-s rules are covered by adjective.spec.ts.
+  const noun = num === 'pl' ? (cs === 'dat' ? dativePlural(n.plural) : n.plural) : cs === 'gen' && GEN[nId] ? GEN[nId] : n.singular;
   return `${art}${adjForm} ${noun}`;
 }
 
@@ -65,6 +68,11 @@ const cases = [
   ['hoch', 'haus', 'mixed', 'sg', 'nom', 'ein hohes Haus'],
   ['teuer', 'auto', 'strong', 'sg', 'dat', 'teurem Auto'],
   ['dunkel', 'zimmer', 'weak', 'sg', 'nom', 'das dunkle Zimmer'],
+  ['gut', 'wein', 'weak', 'sg', 'gen', 'des guten Weines'],
+  ['teuer', 'auto', 'mixed', 'sg', 'gen', 'eines teuren Autos'],
+  ['hoch', 'haus', 'strong', 'sg', 'gen', 'hohen Hauses'],
+  ['gut', 'wein', 'strong', 'pl', 'gen', 'guter Weine'],
+  ['gut', 'wein', 'mixed', 'pl', 'gen', 'meiner guten Weine'],
 ];
 for (const [a, n, cls, num, cs, want] of cases) {
   const got = phrase(a, n, cls, num, cs);

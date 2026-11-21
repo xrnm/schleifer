@@ -4,6 +4,17 @@ All notable changes to Schleifer are tracked here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/),
 dates in `YYYY-MM-DD`.
 
+## 2026-11-21
+
+- Adjektiv: Genitiv. The adjective drill now covers the genitive (48 ending
+  cells, up from 36): des guten Weines, eines teuren Autos, guter Frau,
+  meiner guten Weine. Masc/neut nouns take their -(e)s from
+  `genitiveSingularForms`; where both -es and -s are standard, both are
+  graded correct. Rule card and session chips include Genitiv.
+- Adjektiv case filter is now multi-select: toggle Nom / Akk / Dat / Gen
+  independently, "Alle" turns them all on. Saved single-choice settings
+  migrate (old "Alle" now includes Genitiv).
+
 ## 2026-05-11
 
 - Top-level practice areas. The header nav now offers two modes —
