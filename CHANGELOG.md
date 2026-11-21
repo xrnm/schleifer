@@ -14,6 +14,9 @@ dates in `YYYY-MM-DD`.
 - Adjektiv case filter is now multi-select: toggle Nom / Akk / Dat / Gen
   independently, "Alle" turns them all on. Saved single-choice settings
   migrate (old "Alle" now includes Genitiv).
+- Adjektiv sessions reserve 8 slots for never-seen cells and shuffle the
+  order, so new cells (like Genitiv) show up even with a review backlog.
+  "Drill due now" still only replays cells you've already answered.
 
 ## 2026-05-11
 

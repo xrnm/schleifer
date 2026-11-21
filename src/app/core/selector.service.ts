@@ -16,6 +16,9 @@ import { AdjCell, adjCellId, allAdjCells, isAdjectiveCardId } from './adjective'
 const RECENT_FAIL_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 const REVIEW_CAP = 35;
 const RECENT_FAIL_CAP = 10;
+// Adjective sessions keep this many slots for never-seen cells, so a review
+// backlog can't starve newly added cells (e.g. the Genitiv cells) forever.
+const ADJ_NEW_RESERVE = 8;
 const MAX_PER_NOUN = 2;
 
 export type PracticeArea = 'deklination' | 'vokabular' | 'adjektiv';
@@ -206,8 +209,9 @@ export class SelectorService {
   }
 
   /**
-   * Returns the adjective ending-cell ids to present this session, ordered
-   * review → recent-fail → new. The universe is the 48 cells (filtered by the
+   * Returns the adjective ending-cell ids to present this session: due
+   * reviews, recent fails and unseen cells, with slots reserved for unseen
+   * ones (see planAdjSession). The universe is the 48 cells (filtered by the
    * adjective drawer); each cell is one SRS card in the shared cardStates
    * store. The surface (which adjective/noun) is chosen at render time.
    */
@@ -222,59 +226,7 @@ export class SelectorService {
       states.filter((s) => isAdjectiveCardId(s.cardId)).map((s) => [s.cardId, s]),
     );
 
-    const reviewQueue: { id: string; state: CardState }[] = [];
-    const recentFailQueue: { id: string; state: CardState }[] = [];
-    const seen = new Set<string>();
-
-    for (const id of ids) {
-      const s = stateById.get(id);
-      if (!s) continue;
-      seen.add(id);
-      if (s.lastResult !== null && s.due <= now) {
-        reviewQueue.push({ id, state: s });
-      } else if (
-        (s.lastResult === 'incorrect' || s.lastResult === 'idk') &&
-        s.lastShownAt !== null &&
-        now - s.lastShownAt <= RECENT_FAIL_WINDOW_MS
-      ) {
-        recentFailQueue.push({ id, state: s });
-      }
-    }
-    reviewQueue.sort((a, b) => a.state.due - b.state.due);
-    recentFailQueue.sort(
-      (a, b) => (b.state.lastShownAt ?? 0) - (a.state.lastShownAt ?? 0),
-    );
-
-    const picked: string[] = [];
-    const pushed = new Set<string>();
-    const push = (id: string) => {
-      if (pushed.has(id)) return;
-      picked.push(id);
-      pushed.add(id);
-    };
-
-    for (const { id } of reviewQueue) {
-      if (picked.length >= targetCount || picked.length >= REVIEW_CAP) break;
-      push(id);
-    }
-    const reviewSlot = picked.length;
-    for (const { id } of recentFailQueue) {
-      if (picked.length >= targetCount) break;
-      if (picked.length - reviewSlot >= RECENT_FAIL_CAP) break;
-      push(id);
-    }
-    if (picked.length < targetCount) {
-      const fresh = ids.filter((id) => !seen.has(id));
-      for (let i = fresh.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [fresh[i], fresh[j]] = [fresh[j], fresh[i]];
-      }
-      for (const id of fresh) {
-        if (picked.length >= targetCount) break;
-        push(id);
-      }
-    }
-    return picked;
+    return planAdjSession(ids, stateById, targetCount, now);
   }
 
   /**
@@ -398,4 +350,74 @@ function shuffleAvoidingAdjacent(cards: Card[]): Card[] {
     }
   }
   return arr;
+}
+
+/**
+ * Plans an adjective session from the allowed cell ids: due reviews (earliest
+ * first, capped so ADJ_NEW_RESERVE slots stay free for unseen cells), then
+ * recent fails, then unseen cells filling whatever is left. The result is
+ * shuffled so new cells don't all sit at the tail of the session.
+ */
+export function planAdjSession(
+  ids: string[],
+  stateById: Map<string, CardState>,
+  targetCount: number,
+  now: number,
+  rand: () => number = Math.random,
+): string[] {
+  const reviewQueue: CardState[] = [];
+  const recentFailQueue: CardState[] = [];
+  const fresh: string[] = [];
+
+  for (const id of ids) {
+    const s = stateById.get(id);
+    if (!s || s.lastResult === null) {
+      fresh.push(id);
+    } else if (s.due <= now) {
+      reviewQueue.push(s);
+    } else if (
+      (s.lastResult === 'incorrect' || s.lastResult === 'idk') &&
+      s.lastShownAt !== null &&
+      now - s.lastShownAt <= RECENT_FAIL_WINDOW_MS
+    ) {
+      recentFailQueue.push(s);
+    }
+  }
+  reviewQueue.sort((a, b) => a.due - b.due);
+  recentFailQueue.sort((a, b) => (b.lastShownAt ?? 0) - (a.lastShownAt ?? 0));
+  shuffle(fresh, rand);
+
+  const reserve = Math.min(fresh.length, ADJ_NEW_RESERVE, targetCount);
+  const reviewLimit = Math.min(REVIEW_CAP, targetCount - reserve);
+
+  const picked: string[] = [];
+  for (const s of reviewQueue) {
+    if (picked.length >= reviewLimit) break;
+    picked.push(s.cardId);
+  }
+  const reviewSlot = picked.length;
+  for (const s of recentFailQueue) {
+    if (picked.length >= targetCount - reserve) break;
+    if (picked.length - reviewSlot >= RECENT_FAIL_CAP) break;
+    picked.push(s.cardId);
+  }
+  for (const id of fresh) {
+    if (picked.length >= targetCount) break;
+    picked.push(id);
+  }
+  // Reviews beyond the reserve-limited cap can still use slots that unseen
+  // cells didn't fill (e.g. once every cell has been seen).
+  for (const s of reviewQueue.slice(reviewSlot)) {
+    if (picked.length >= targetCount || picked.length >= REVIEW_CAP) break;
+    picked.push(s.cardId);
+  }
+  return shuffle(picked, rand);
+}
+
+function shuffle<T>(a: T[], rand: () => number): T[] {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
 }
